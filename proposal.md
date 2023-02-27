@@ -18,8 +18,8 @@ Supported addressing mode are:
 
 ## OpCode model:
 
-| Flag | OpCode/Type | Register/Immediate reference |
-| ---- | ----------- | ---------------------------- |
+| Flag (8 bits) | OpCode/Type (8 bits) | Register/Immediate reference (48 bits) |
+| ------------- | -------------------- | -------------------------------------- |
 
 ## Instructions documentation by types:
 
