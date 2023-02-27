@@ -9,7 +9,7 @@ author: Ibrahima Keita, Dung Nguyen, Sergio Ly
 
 Named Garand Architecture. As a Special Purpose architecture derived from RISC/ARM, its primary support is gaming and graphics processing. It contains low-level graphics support, compatible with openGL. Multiple co-processing is also possible. Vectorization such as Fused Multiplacation-Add is included. On Developer side, extensible interface is documented as Add-On.
 
-Word size is 64 bits, while the architechture supports integer and fixed-point number. There will be 16 general purpose registers, 16 I/O registers, Link Register, Stack Pointer register. For each instructions, 3 is the maximum number of operands. Fetching model is Multiple words per instruction - Princeton (unified instruction and data memory), with 48-bit Word addressing.
+Word size is 64 bits, while the architechture supports integer and fixed-point number. There will be 16 general purpose registers, 16 I/O registers, Link Register, Stack Pointer register. For each instructions, 3 is the maximum number of operands. Fetching model is multiple instruction per word - Princeton (unified instruction and data memory), with 48-bit Word addressing.
 
 Supported addressing mode are:
 
