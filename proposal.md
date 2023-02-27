@@ -99,10 +99,6 @@ Bitwise Xor two registers S and T. Store in register X.
 
 Bitwise Not register S. Store in register X.
 
-#### FLIP
-
-Flip bits of register S and store in register X.
-
 #### ASR
 
 Arithmetic shift right Register S by Register T amount, stores in Register X.
