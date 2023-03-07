@@ -85,11 +85,34 @@ We want to keep our instruction and data memory together; as such, we will use t
 
 #### MREAD
 
-Read from memory address indicated by register S, offset by register T.
+##### Assembler syntax
+
+`MREAD   RX, RM, RN`
+
+##### Description
+
+Read from memory address and store value in register X. The memory address
+is calculated by base value from register M, plus 4 times of offset value from
+register N.
+
+##### Psuedo C-code
+
+`RX = RM[RN << 2]`
 
 #### MRITE
 
-Write to memory address indicated by register S, offset by register T
+##### Assembler syntax
+
+`MRITE   RX, RM, RN`
+
+##### Description
+Write to memory address using value stored in register X. The memory address
+is calculated by base value from register M, plus 4 times offset value from
+register N.
+
+##### Psuedo C-code
+
+`RM[RN << 2] = RX`
 
 #### BIND
 
