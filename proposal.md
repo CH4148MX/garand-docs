@@ -51,6 +51,14 @@ Our architecture is designed to support 36 total registers. The breakdown is as 
 
 Each of these registers uses a single word (32 bits) as its underlying data type.
 
+#### Encoding
+
+| Name  | Size | Encoding | Description                    |
+| ----- | ---- | -------- | ------------------------------ |
+| `R##` | 32   | 0-15     | General-Purpose Registers 0-15 |
+| `I##` | 32   | 0-15     | IO-specific Registers 0-15     |
+| `SP`  | 32   | 16       | Stack Pointer                  |
+
 ### Fetching Model
 As described earlier, our word size is 32 bits. To fully take advantage of this, we will use the `multiple words per instruction` fetch model. This will give us optimal code size while performing relatively efficiently.
 
