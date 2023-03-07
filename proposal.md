@@ -6,7 +6,7 @@ author: Ibrahima Keita, Dung Nguyen, Sergio Ly
 <!-- # Garand Architecture -->
 
 ## Descriptions
-The Garand Architecture is a special-purpose architecture designed with gaming and graphics processing in mind. 
+The Garand Architecture is a special-purpose architecture designed with gaming and graphics processing in mind.
 
 <!-- Named Garand Architecture. As a Special Purpose architecture derived from RISC/ARM, its primary support is gaming and graphics processing. It contains low-level graphics support, compatible with openGL. Multiple co-processing is also possible. Vectorization such as Fused Multiplacation-Add is included. On Developer side, extensible interface is documented as Add-On. -->
 
@@ -16,10 +16,17 @@ The Garand Architecture is a special-purpose architecture designed with gaming a
 Our word size is 32 bits, which makes a half word 16 bits, a double word 64 bits, and so on.
 
 ### Data Types
-In terms of data types, we aim to support two distinct numerical types.
+In terms of data types, we aim to support two distinct numerical types: integer and fixed point.
 
 #### Integer
-<Description here>.
+
+The ISA defines two types of integer:
+-   Unsigned integer: Value ranges from 0 to the largest positive number can be binary encoded.
+    For example, 32 bits unsigned integer ranges from 0 to 4294967295 ($2^{32}-1$).
+    Bitwise instructions always treat value as unsigned.
+-   Signed integer: The ISA assume two's compliment representation for signed integer.
+    For example, 32 bits signed integer ranges from -2147483648($-2^{31}$) to 2147483647 ($2^{31}-1$).
+    Most arithmetic instructions supports signed integer.
 
 #### Fixed Point 
 In graphics, precision in calculations is fundamental; from raytracing, to interpolation, etc. As such, it is fundamental that, for a graphics-based architecture, we have some sort of mechanism for precise calculations. Therefore, we will be implementing fixed point precision.
