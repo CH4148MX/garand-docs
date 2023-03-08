@@ -35,8 +35,8 @@ In terms of data types, we aim to support two distinct numerical types: integer 
 
 #### Integer
 Our architecture defines two types of integers:
-- A 32 bit unsigned integer, with the range [0, $2^{32}-1$].
-- A 32 bit signed integer. To simulate the negative range of numbers, our instruction set architecture will use two's complement to store distinct numbers. Therefore, our range is [$-2^{31}$, $2^{31}-1$], or [-2147483648, 2147483647]. All operations which operate on unsigned numbers will support operations on the signed equivalents, but sign extension will be performed to maintain proper two's complement support.
+-   A 32 bit unsigned integer, with the range [0, $2^{32}-1$].
+-   A 32 bit signed integer. To simulate the negative range of numbers, our instruction set architecture will use two's complement to store distinct numbers. Therefore, our range is [$-2^{31}$, $2^{31}-1$], or [-2147483648, 2147483647]. All operations which operate on unsigned numbers will support operations on the signed equivalents, but sign extension will be performed to maintain proper two's complement support.
 
 #### Fixed Point 
 In graphics, precision in calculations is fundamental; from raytracing, to interpolation, etc. As such, it is fundamental that, for a graphics-based architecture, we have some sort of mechanism for precise calculations. Therefore, we will be implementing fixed point precision.
@@ -51,9 +51,10 @@ As these numbers require special treatment, we will implement instructions speci
 
 ### Registers
 Our architecture is designed to support 36 total registers. The breakdown is as follows:
-- 16 General-Purpose Registers (assembler syntax `R##`).
-- 16 IO-specific registers (assembler syntax: `I##`)
-- 4 special purpose registers:
+
+-   16 General-Purpose Registers (assembler syntax `R##`).
+-   16 IO-specific registers (assembler syntax: `I##`)
+-   4 special purpose registers:
     - Condition Flag (assembler syntax: `CND`) - Used to store and procure the results of carry, overflow, or other conditional operations.
     - Program Counter (assembler syntax: `PC`) - Points to the currently executed instruction.
     - Link Register (assembler syntax: `LR`) - Commonly stores an address to a function (used in the caller-callee specification).
@@ -89,9 +90,10 @@ We want to keep our instruction and data memory together; as such, we will use t
 ### Addressing Modes
 
 Our architecture supports 2 types of address modes:
-- Register: Register value will be read and used as address for the next execution
+
+-   Register: Register value will be read and used as address for the next execution
 of the processor. For instruction details, see `BRUH.CC`
-- PC + Immediate Offset (PC Relative): Address for the next execution
+-   PC + Immediate Offset (PC Relative): Address for the next execution
 of the processor will be calculated using Program Counter (current address) plus
 specified offset immediate. This is the recommended method for subroutine branching.
 For instruction details, see `B.CC`
@@ -106,14 +108,15 @@ When choosing the encoding for this architecture, we wanted to go for an approac
 
 #### Operation Codes
 A list of the operation codes can be found here. The table is subjected to change in the future.
+
 | Opcode   | Condition | Operation |
 | -------- | --------- | --------- |
 | `000000` | `0000`    | MREAD     |
 | `000000` | `0001`    | MWRITE    |
 | `000000` | `0010`    | BIND      |
 | `000000` | `0011`    | UNBIND    |
-| `000001` | `0000`    | BRUH.CC   |
-| `000001` | `0001`    | B.CC      |
+| `000010` | -         | BRUH.CC   |
+| `000011` | -         | B.CC      |
 | `000100` | `0000`    | ADD       |
 | `000100` | `0001`    | ADDI      |
 | `000100` | `1000`    | FX_ADD    |
@@ -155,11 +158,13 @@ A list of the operation codes can be found here. The table is subjected to chang
 #### Condition encoding
 
 ##### Condition flags
+
 Our architecture supports condition flags, based on the specifications from ARM. All four condition flags are stored in the lower four bits of the condition flag register, and (optionally) in the condition field of our instruction encoding. The details of each flag are:
-- `N`: Negative condition flag. Set if the result of the most recent flag-setting instruction is negative.
-- `C`: Carry condition flag. Set if the result of the most recent flag-setting instruction has carry.
-- `Z`: Zero condition flag. Set if the result of the most recent flag-setting instruction is zero.
-- `V`: Overflow condition flag. Set if the result of the most recent flag-setting instruction has overflow.
+
+-   `N`: Negative condition flag. Set if the result of the most recent flag-setting instruction is negative.
+-   `C`: Carry condition flag. Set if the result of the most recent flag-setting instruction has carry.
+-   `Z`: Zero condition flag. Set if the result of the most recent flag-setting instruction is zero.
+-   `V`: Overflow condition flag. Set if the result of the most recent flag-setting instruction has overflow.
 
 The layout for each of these flags in our condition fields is as follows:
 
