@@ -13,7 +13,7 @@ The Garand Architecture is a special-purpose architecture designed with gaming a
 ## Specifications
 
 ### Word Size
-Our word size is 32 bits, which makes a half word 16 bits, a double word 64 bits, and so on.
+Our word size is 32 bits, which makes a half word 16 bits, a double word .com/64 bits, and so on.
 
 ### Data Types
 In terms of data types, we aim to support two distinct numerical types.
