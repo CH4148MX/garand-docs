@@ -37,7 +37,7 @@ Our architecture defines two types of integers:
 #### Fixed Point 
 In graphics, precision in calculations is fundamental; from raytracing, to interpolation, etc. As such, it is fundamental that, for a graphics-based architecture, we have some sort of mechanism for precise calculations. Therefore, we will be implementing fixed point precision.
 
-For our implementation of fixed point, we will reserve the lower 23 bits of a word to store our __fractional__, which is the number that comes after the decimal point. Our _exponent_, which is 8 bits, will immediately follow the mantissa in bit order, taking bits 23 through 30 inclusive. Finally, the most significant bit (which is bit 31) will act as a signage bit, allowing us to have positive and negative fixed-point values.
+For our implementation of fixed point, we will reserve the lower 23 bits of a word to store our __fractional__, which is the number that comes after the decimal point. Our _exponent_, which is 8 bits, will immediately follow the __fractional__ in bit order, taking bits 23 through 30 inclusive. Finally, the most significant bit (which is bit 31) will act as a signage bit, allowing us to have positive and negative fixed-point values.
 
 A detailed diagram of this can be seen below.
 
@@ -66,21 +66,28 @@ Each of these registers uses a single word (32 bits) as its underlying data type
 | `SP`  | 32   | 16       | Stack Pointer                  |
 
 #### Binding & Locking
-As we are writing a multi-core architecture, we are very likely to run into race conditions when writing to/reading from registers. 
+As we are writing a multi-core architecture, we are very likely to run into race conditions when writing to/reading from registers. A special feature in each core is thus needed.
 
 As such, at the hardware level, we will implement an atomic locking mechanism that activates when a core writes to a register. The way this works is simple: the first core that writes to a register will have its operations carried out, while the other cores will have to wait until the lock is released. We will keep track of this using a table protected by atomic locks.
 
 Furthermore, we are also going to introduce the concept of register binding for IO registers. The motivation behind this is to create a hassle-free experience for a developer that is interfacing with hardware devices. This will be provided in the form of the `BIND` instruction, which will take an IO-specific register, store the memory address of an IO device (which would likely be mapped to an index) in one of the IO registers, and protects the value in the IO-register from being overwritten. That way, we do not need to do static memory writes to registers.
 
 ### Fetching Model
-As described earlier, our word size is 32 bits. To fully take advantage of this, we will use the `multiple words per instruction` fetch model. This will give us optimal code size while performing relatively efficiently.
+As described earlier, our word size is 32 bits. To fully take advantage of this, we will use the `multiple words per instruction` fetch model. This will give us optimal code size while performing relatively efficiently. The only way to fetch data to/from memory is Load and Store.
+The corresponding instructions for the two operations are: `MREAD`, `MWRITE`.
 
 ### Memory Architecture
 We want to keep our instruction and data memory together; as such, we will use the _Princeton_ architecture.
 
 ### Addressing Modes
-- Load-Store: for memory load/store instructions only.
-- Register, Immediate, PC + Immediate Offset (PC Relative): for the rest of the instructions.
+
+Our architecture supports 2 types of address modes:
+- Register: Register value will be read and used as address for the next execution
+of the processor. For instruction details, see `BRUH.CC`
+- PC + Immediate Offset (PC Relative): Address for the next execution
+of the processor will be calculated using Program Counter (current address) plus
+specified offset immediate. This is the recommended method for subroutine branching.
+For instruction details, see `B.CC`
 
 ### Instructions
 
@@ -189,15 +196,15 @@ register N.
 RX = RM[RN];
 ```
 
-#### MRITE
+#### MWRITE
 
 ##### Assembler syntax
 
-`MRITE   RX, RM, RN`
+`MWRITE   RX, RM, RN`
 
 ##### Description
 Write to memory address using value stored in register X. The memory address
-is calculated by base value from register M, plus the offset value from
+is calculated b using base value from register M, plus the offset value from
 register N.
 
 ##### Psuedo C-code
@@ -637,13 +644,13 @@ Stop all execution. In the simulator, the processor must stop processing at this
 
 ##### Description
 
-No-operation. The processor will not do anything on this instruction other than
-increasing PC.
+No-operation. The processor will not perform any operation on this instruction
+other than increasing PC.
 
 ## Management Plan
 
 The simulator for Garand is written in C++, using C++20 standard.
-All the team member use VS Code to develop the project.
+All the team members use VS Code to develop the project.
 Dear ImGui library is used to provide Graphical User Interface (GUI) for the simulator.
 The source code and this document are version-controlled and hosted on Github.
 Issues and To-do lists are also maintained on Github.
