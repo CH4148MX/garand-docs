@@ -125,7 +125,7 @@ A list of the operation codes can be found here.
 | 11100 |           |          |
 | 11101 |           |          |
 | 11110 |           |          |
-| 11111 |           |          |
+| 11111 | NOP       |          |
 
 
 #### Condition encoding
@@ -228,9 +228,10 @@ See _Binding & Locking_ section for more details.
 
 ##### Description
 
-Change the Program Counter value to a label at a PC-relative offset.
+Change the Program Counter value to a label at a PC-relative offset if the condition
+matches the Condition Flag registers, else this is a no-op.
 The address is computed by using sum of PC and immdiate in encoding.
-The `CC` represents one of the condition codes defined in _Condition Encoding_ section.
+The condition `CC` represents one of the condition codes defined in _Condition Encoding_ section.
 
 ##### Psuedo C-code
 
@@ -246,9 +247,10 @@ PC = PC + imm;
 
 ##### Description
 
-Change the Instruction Pointer to address indicated by register S.
-In other words, performing an absolute jump.
-The `CC` represents one of the condition codes defined in _Condition Encoding_ section.
+Change the Instruction Pointer to address indicated by register M if the condition
+matches the Condition Flag registers, else this is a no-op.
+In other words, this instruction performs an absolute jump.
+The condition `CC` represents one of the condition codes defined in _Condition Encoding_ section.
 
 ##### Psuedo C-code
 
@@ -626,3 +628,14 @@ Break execution. In the simulator, the processor must pause processing after thi
 ##### Description
 
 Stop all execution. In the simulator, the processor must stop processing at this point and exit the program.
+
+#### NOP
+
+##### Assembler syntax
+
+`NOP`
+
+##### Description
+
+No-operation. The processor will not do anything on this instruction other than
+increasing PC.
