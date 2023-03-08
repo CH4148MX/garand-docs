@@ -1,12 +1,14 @@
 ---
 title: Garand Architecture
 author: Ibrahima Keita, Dung Nguyen, Sergio Ly
+geometry: margin=2cm
+output: pdf_document
 ---
 
 <!-- # Garand Architecture -->
 
 ## Descriptions
-The Garand Architecture is a special-purpose architecture designed with gaming and graphics processing in mind. 
+The Garand Architecture is a special-purpose architecture designed with gaming and graphics processing in mind.
 
 <!-- Named Garand Architecture. As a Special Purpose architecture derived from RISC/ARM, its primary support is gaming and graphics processing. It contains low-level graphics support, compatible with openGL. Multiple co-processing is also possible. Vectorization such as Fused Multiplacation-Add is included. On Developer side, extensible interface is documented as Add-On. -->
 
@@ -16,10 +18,16 @@ The Garand Architecture is a special-purpose architecture designed with gaming a
 Our word size is 32 bits, which makes a half word 16 bits, a double word .com/64 bits, and so on.
 
 ### Data Types
-In terms of data types, we aim to support two distinct numerical types.
+In terms of data types, we aim to support two distinct numerical types: integer and fixed point.
 
 #### Integer
-<Description here>.
+
+The ISA defines two types of integer:
+-   Unsigned integer: Value ranges from 0 to the largest positive number can be binary encoded.
+    For example, 32 bits unsigned integer ranges from 0 to 4294967295 ($2^{32}-1$).
+-   Signed integer: The ISA assume two's compliment representation for signed integer.
+    For example, 32 bits signed integer ranges from -2147483648($-2^{31}$) to 2147483647 ($2^{31}-1$).
+    Most arithmetic instructions supports signed integer.
 
 #### Fixed Point 
 In graphics, precision in calculations is fundamental; from raytracing, to interpolation, etc. As such, it is fundamental that, for a graphics-based architecture, we have some sort of mechanism for precise calculations. Therefore, we will be implementing fixed point precision.
@@ -44,6 +52,14 @@ Our architecture is designed to support 36 total registers. The breakdown is as 
 
 Each of these registers uses a single word (32 bits) as its underlying data type.
 
+#### Encoding
+
+| Name  | Size | Encoding | Description                    |
+| ----- | ---- | -------- | ------------------------------ |
+| `R##` | 32   | 0-15     | General-Purpose Registers 0-15 |
+| `I##` | 32   | 0-15     | IO-specific Registers 0-15     |
+| `SP`  | 32   | 16       | Stack Pointer                  |
+
 ### Fetching Model
 As described earlier, our word size is 32 bits. To fully take advantage of this, we will use the `multiple words per instruction` fetch model. This will give us optimal code size while performing relatively efficiently.
 
@@ -64,17 +80,78 @@ We want to keep our instruction and data memory together; as such, we will use t
 | ---- | ----------- | ---------------------------- |
 
 
+#### Condition encoding
+
+##### Condition flags
+
+Garand uses 4 condition flags, based on ARM. All 4 are stored in Condition Flag register. The details of each flag are:
+- `N`: Negative condition flag. Set if the result of the most recent flag-setting instruction is negative.
+- `C`: Carry condition flag. Set if the result of the most recent flag-setting instruction has carry.
+- `Z`: Zero condition flag. Set if the result of the most recent flag-setting instruction is zero.
+- `V`: Overflow condition flag. Set if the result of the most recent flag-setting instruction has overflow.
+
+##### Condtion codes
+
+Condtion codes are used in control instructions to perform conditional branch or jump.
+Current instructions use condition codes are: `BRUHCC`, `BCC`.
+
+| Encoding | Mnemonic | Meaning(Integer)               | Meaning (Fixed point) | Flag                  |
+| -------- | -------- | ---------------------------    | --------------------- | -------------------   |
+| `0000`   | `AL`     | Always                         |                       | Any                   |
+| `0001`   | `EQ`     | Equal                          |                       | `Z == 0`              |
+| `0010`   | `NE`     | Not equal                      |                       | `Z == 1`              |
+| `0011`   | `LO`     | Unsigned less than             |                       | `C == 0`              |
+| `0100`   | `LT`     | Signed less than               |                       | `N != V`              |
+| `0101`   | `HI`     | Unsigned greater than          |                       | `C == 1 && Z == 0`    |
+| `0110`   | `GT`     | Signed greater than            |                       | `Z == 0 && N == V`    |
+| `0111`   | `LS`     | Unsigned less than or equal    |                       | `!(C == 1 && Z == 0)` |
+| `1000`   | `LE`     | Signed less than or equal      |                       | `!(Z == 0 && N == V)` |
+| `1001`   | `HS`     | Unsigned greater than or equal |                       | `C == 1`              |
+| `1010`   | `GE`     | Signed greater than or equal   |                       | `N == V`              |
+| `1011`   | `VS`     | Overflow                       |                       | `V == 1`              |
+| `1100`   | `VC`     | No overflow                    |                       | `V == 0`              |
+| `1101`   | `PL`     | Positive or zero               |                       | `N == 0`              |
+| `1110`   | `NG`     | Negative                       |                       | `N == 1`              |
+| `1111`   |          | *Reserved*                     | *Reserved*            |                       |
+
 ## Instructions documentation by types:
 
 ### Load/Store
 
 #### MREAD
 
-Read from memory address indicated by register S, offset by register T.
+##### Assembler syntax
+
+`MREAD   RX, RM, RN`
+
+##### Description
+
+Read from memory address and store value in register X. The memory address
+is calculated by base value from register M, plus 4 times of offset value from
+register N.
+
+##### Psuedo C-code
+
+```c
+RX = RM[RN << 2];
+```
 
 #### MRITE
 
-Write to memory address indicated by register S, offset by register T
+##### Assembler syntax
+
+`MRITE   RX, RM, RN`
+
+##### Description
+Write to memory address using value stored in register X. The memory address
+is calculated by base value from register M, plus 4 times offset value from
+register N.
+
+##### Psuedo C-code
+
+```c
+RM[RN << 2] = RX;
+```
 
 #### BIND
 
@@ -82,88 +159,379 @@ Bind a IO register to a specific device. Any write/read instruction will be auto
 
 ### Control
 
+#### BCC
+
+##### Assembler syntax
+
+`BRUHAL label`  
+`BRUHEQ label`  
+`BRUHNE label`  
+`BRUHLO label`  
+`BRUHLT label`  
+`BRUHHI label`  
+`BRUHGT label`  
+`BRUHBL label`  
+`BRUHLE label`  
+`BRUHAB label`  
+`BRUHGE label`  
+`BRUHOV label`  
+`BRUHNO label`  
+`BRUHPL label`  
+`BRUHNG label`  
+
+##### Description
+
+Change the Program Counter value to a label at a PC-relative offset.
+The address is computed by using sum of PC and immdiate in encoding.
+
+##### Psuedo C-code
+
+```c
+PC = PC + imm;
+```
+
 #### BRUHCC
 
+##### Assembler syntax
+
+`BRUHAL RM`  
+`BRUHEQ RM`  
+`BRUHNE RM`  
+`BRUHLO RM`  
+`BRUHLT RM`  
+`BRUHHI RM`  
+`BRUHGT RM`  
+`BRUHBL RM`  
+`BRUHLE RM`  
+`BRUHAB RM`  
+`BRUHGE RM`  
+`BRUHOV RM`  
+`BRUHNO RM`  
+`BRUHPL RM`  
+`BRUHNG RM`  
+
+##### Description
+
 Change the Instruction Pointer to address indicated by register S.
+In other words, performing an absolute jump.
 
-##### CC Code
+##### Psuedo C-code
 
--   Always
--   unsigned less than
--   signed less than
--   unsigned greater than
--   signed greater than
--   unsigned greater than or equal
--   signed greater than or equal
--   unsigned less than or equal
--   signed less than or equal
--   Equal/Zero
--   Inequal/Not-Zero
--   Overflow
--   No overflow
--   Negative
--   Positive or zero
-
-##### Branch target
-
-Support both relative/absolute jump. subroutine: relative. Function call: absolute.
+```c
+PC = RM;
+```
 
 ### Integer
 
-Each instructions has **(I)mmediate** variation, which allow immediate to be written
-in-place of register T.
-
 #### ADD
 
-Add two registers S and T. Store in register X. Overflow is checked.
+##### Assembler syntax
+
+`ADD    RX, RM, RN`
+
+##### Description
+
+Calculate the two's complement 32-bit sum of two registers M and N.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM + RN;
+```
+
+#### ADDI
+
+##### Assembler syntax
+
+`ADDI   RX, RM, #imm`
+
+##### Description
+
+Calculate the two's complement 32-bit sum of register M and immediate.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM + imm;
+```
+
+#### SUB
+
+##### Assembler syntax
+
+`SUB    RX, RM, RN`
+
+##### Description
+
+Calculate the two's complement 32-bit difference of two registers M and N.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM - RN;
+```
+
+#### SUBI
+
+##### Assembler syntax
+
+`SUBI   RX, RM, #imm`
+
+##### Description
+
+Calculate the two's complement 32-bit difference of register M and immediate.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM - imm;
+```
 
 #### MUL
 
-Mutiply two registers S and T. Store in register X.
+##### Assembler syntax
+
+`MUL    RX, RM, RN`
+
+##### Description
+
+Calculate the two's complement 32-bit product of registers M and N.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM * RN;
+```
+
+#### MULI
+
+##### Assembler syntax
+
+`MULI   RX, RM, #imm`
+
+##### Description
+
+Calculate the two's complement 32-bit product of register M and immediate.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM * imm;
+```
 
 #### DIV
 
-Divide two registers S and T. Store in register X.
+##### Assembler syntax
+
+`DIV    RX, RM, RN`
+
+##### Description
+
+Calculate the two's complement 32-bit quotient of registers M and N.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM / RN;
+```
+
+#### DIVI
+
+##### Assembler syntax
+
+`DIVI   RX, RM, imm`
+
+##### Description
+
+Calculate the two's complement 32-bit quotient of register M and immediate.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM / imm;
+```
+
+#### MADD
+
+##### Assembler syntax
+
+`MADD   RX, RM, RN`
+
+##### Description
+
+Calculate the two's complement 32-bit product of registers M and N.
+Add the product with register X, then store the sum in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RX * (RM + RN);
+```
 
 #### AND
 
-Bitwise And two registers S and T. Store in register X.
+##### Assembler syntax
+
+`AND    RX, RM, RN`
+
+##### Description
+
+Calculate the bitwise AND of registers M and N.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM & RN;
+```
 
 #### NAND
 
-Bitwise Nand two registers S and T. Store in register X.
+##### Assembler syntax
+
+`NAND   RX, RM, RN`
+
+##### Description
+
+Calculate the bitwise NAND of registers M and N.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = NAND(RM, RN);
+```
 
 #### OR
 
-Bitwise Or two registers S and T. Store in register X.
+##### Assembler syntax
+
+`OR     RX, RM, RN`
+
+##### Description
+
+Calculate the bitwise OR of registers M and N.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM | RN;
+```
 
 #### XOR
 
-Bitwise Xor two registers S and T. Store in register X.
+##### Assembler syntax
+
+`XOR    RX, RM, RN`
+
+##### Description
+
+Calculate the bitwise XOR of registers M and N.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM ^ RN;
+```
 
 #### NOT
 
-Bitwise Not register S. Store in register X.
+##### Assembler syntax
+
+`NOT    RX, RM`
+
+##### Description
+
+Calculate the bitwise NOT of registers M.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = ~RM;
+```
 
 #### ASR
 
-Arithmetic shift right Register S by Register T amount, stores in Register X.
+##### Assembler syntax
+
+`ASR    RX, RM, RN`
+
+##### Description
+
+Arithmetically shift value of Register M right by a variable number of bits.
+The amount of shift is from Register N value.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM >> RN;
+```
 
 #### LSR
 
-Logical shift right Register S by Register T amount, stores in Register X.
+##### Assembler syntax
+
+`LSR    RX, RM, RN`
+
+##### Description
+
+Logically shift value of Register M right by a variable number of bits.
+The amount of shift is from Register N value.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM >> RN;
+```
 
 #### LSL
 
-Logical shift left Register S by Register T amount, stores in Register X.
+##### Assembler syntax
+
+`LSL    RX, RM, RN`
+
+##### Description
+
+Logically shift value of Register M left by a variable number of bits.
+The amount of shift is from Register N value.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM >> RN;
+```
 
 #### RSR
 
-Rotational shift right Register S by Register T amount, stores in Register X.
+##### Assembler syntax
 
-#### RSL
+`RSR    RX, RM, RN`
 
-Rotational shift left Register S by Register T amount, stores in Register X.
+##### Description
+
+Rotationally shift value of Register M right by a variable number of bits.
+The amount of shift is from Register N value.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = (RM << (sizeof(RM) - RN)) | (RM >> RN);
+```
 
 ### Fixed-point number
 
@@ -173,8 +541,20 @@ Use the same mnemonics as general purpose registers'. It is undefined behaviour 
 
 #### BREAK
 
+##### Assembler syntax
+
+`BREAK`
+
+##### Description
+
 Break execution. In the simulator, the processor must pause processing after this point.
 
 #### HALT
+
+##### Assembler syntax
+
+`HALT`
+
+##### Description
 
 Stop all execution. In the simulator, the processor must stop processing at this point and exit the program.
