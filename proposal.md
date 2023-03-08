@@ -105,52 +105,51 @@ When choosing the encoding for this architecture, we wanted to go for an approac
 
 
 #### Operation Codes
-A list of the operation codes can be found here.
-| Opcode |Condition  | Operation |
-| ------ | --------- | --------- |
-| 000000 | 0000      | MREAD     |
-| 000000 | 0001      | MWRITE    |
-| 000000 | 0010      | BIND      |
-| 000000 | 0011      | UNBIND    |
-| 000001 | 0000      | BRUH.CC   |
-| 000001 | 0001      | B.CC      |
-| 000100 | 0000      | ADD       |
-| 000100 | 0001      | ADDI      |
-| 000101 | 0000      | SUB       |
-| 000101 | 0001      | SUBI      |
-| 000101 | 0010      | CMP       |
-| 000101 | 0011      | CMPI      |
-| 000110 | 0000      | MUL       |
-| 000110 | 0001      | MULI      |
-| 000111 | 0000      | DIV       |
-| 000111 | 0001      | DIVI      |
-| 001000 | 0000      | AND       |
-| 001000 | 0001      | ANDI      |
-| 001000 | 0010      | TEST      |
-| 001001 | 0000      | NAND      |
-| 001001 | 0001      | NANDI     |
-| 001010 | 0000      | OR        |
-| 001010 | 0001      | ORI       |
-| 001011 | 0000      | XOR       |
-| 001011 | 0001      | XORI      |
-| 001100 | 0000      | LSL       |
-| 001100 | 0001      | LSLI      |
-| 001101 | 0000      | LSR       |
-| 001101 | 0001      | LSRI      |
-| 001110 | 0000      | RSR       |
-| 001110 | 0001      | RSRI      |
-| 010000 |           | NOT       |
-| 010001 |           | MADD      |
-| 100100 | 0000      | FX_ADD    |
-| 100100 | 0001      | FX_ADDI   |
-| 100101 | 0000      | FX_SUB    |
-| 100101 | 0001      | FX_SUBI   |
-| 100101 | 0010      | FX_CMP    |
-| 100101 | 0011      | FX_CMPI   |
-| 100110 | 0000      | FX_MUL    |
-| 101011 | 0001      | FX_MULI   |
-| 101100 | 0000      | FX_DIV    |
-| 101101 | 0001      | FX_DIVI   |
+A list of the operation codes can be found here. The table is subjected to change in the future.
+| Opcode   | Condition | Operation |
+| -------- | --------- | --------- |
+| `000000` | `0000`    | MREAD     |
+| `000000` | `0001`    | MWRITE    |
+| `000000` | `0010`    | BIND      |
+| `000000` | `0011`    | UNBIND    |
+| `000001` | `0000`    | BRUH.CC   |
+| `000001` | `0001`    | B.CC      |
+| `000100` | `0000`    | ADD       |
+| `000100` | `0001`    | ADDI      |
+| `000100` | `1000`    | FX_ADD    |
+| `000100` | `1001`    | FX_ADDI   |
+| `000101` | `0000`    | SUB       |
+| `000101` | `0001`    | SUBI      |
+| `000101` | `0010`    | CMP       |
+| `000101` | `0011`    | CMPI      |
+| `000101` | `1000`    | FX_SUB    |
+| `000101` | `1001`    | FX_SUBI   |
+| `000110` | `0000`    | MUL       |
+| `000110` | `0001`    | MULI      |
+| `000110` | `0100`    | MADD      |
+| `000110` | `1000`    | FX_MUL    |
+| `000110` | `1001`    | FX_MULI   |
+| `000110` | `1100`    | FX_MADD   |
+| `000111` | `0000`    | DIV       |
+| `000111` | `0001`    | DIVI      |
+| `000111` | `1000`    | FX_DIV    |
+| `000111` | `1001`    | FX_DIVI   |
+| `001000` | `0000`    | AND       |
+| `001000` | `0001`    | ANDI      |
+| `001000` | `0010`    | TEST      |
+| `001001` | `0000`    | NAND      |
+| `001001` | `0001`    | NANDI     |
+| `001010` | `0000`    | OR        |
+| `001010` | `0001`    | ORI       |
+| `001011` | `0000`    | XOR       |
+| `001011` | `0001`    | XORI      |
+| `001100` | `0000`    | LSL       |
+| `001100` | `0001`    | LSLI      |
+| `001100` | `0010`    | LSR       |
+| `001100` | `0011`    | LSRI      |
+| `001100` | `0100`    | RSR       |
+| `001100` | `0101`    | RSRI      |
+| `001111` | `0000`    | NOT       |
 
 
 #### Condition encoding
@@ -640,9 +639,6 @@ Store the result in register X.
 RX = (RM << (sizeof(RM) - RN)) | (RM >> RN);
 ```
 
-### Fixed-point number
-
-Use the same mnemonics as general purpose registers'. It is undefined behaviour to mix two types of registers in the instructions.
 
 ### Special
 
