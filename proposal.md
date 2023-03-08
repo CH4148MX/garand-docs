@@ -1,6 +1,8 @@
 ---
 title: Garand Architecture
 author: Ibrahima Keita, Dung Nguyen, Sergio Ly
+geometry: margin=2cm
+output: pdf_document
 ---
 
 <!-- # Garand Architecture -->
@@ -78,6 +80,40 @@ We want to keep our instruction and data memory together; as such, we will use t
 | ---- | ----------- | ---------------------------- |
 
 
+#### Condition encoding
+
+##### Condition flags
+
+Garand uses 4 condition flags, based on ARM. All 4 are stored in Condition Flag register. The details of each flag are:
+- `N`: Negative condition flag. Set if the result of the most recent flag-setting instruction is negative.
+- `C`: Carry condition flag. Set if the result of the most recent flag-setting instruction has carry.
+- `Z`: Zero condition flag. Set if the result of the most recent flag-setting instruction is zero.
+- `V`: Overflow condition flag. Set if the result of the most recent flag-setting instruction has overflow.
+
+##### Condtion codes
+
+Condtion codes are used in control instructions to perform conditional branch or jump.
+Current instructions use condition codes are: `BRUHCC`, `BCC`.
+
+| Encoding | Mnemonic | Meaning(Integer)               | Meaning (Fixed point) | Flag                  |
+| -------- | -------- | ---------------------------    | --------------------- | -------------------   |
+| `0000`   | `AL`     | Always                         |                       | Any                   |
+| `0001`   | `EQ`     | Equal                          |                       | `Z == 0`              |
+| `0010`   | `NE`     | Not equal                      |                       | `Z == 1`              |
+| `0011`   | `LO`     | Unsigned less than             |                       | `C == 0`              |
+| `0100`   | `LT`     | Signed less than               |                       | `N != V`              |
+| `0101`   | `HI`     | Unsigned greater than          |                       | `C == 1 && Z == 0`    |
+| `0110`   | `GT`     | Signed greater than            |                       | `Z == 0 && N == V`    |
+| `0111`   | `LS`     | Unsigned less than or equal    |                       | `!(C == 1 && Z == 0)` |
+| `1000`   | `LE`     | Signed less than or equal      |                       | `!(Z == 0 && N == V)` |
+| `1001`   | `HS`     | Unsigned greater than or equal |                       | `C == 1`              |
+| `1010`   | `GE`     | Signed greater than or equal   |                       | `N == V`              |
+| `1011`   | `VS`     | Overflow                       |                       | `V == 1`              |
+| `1100`   | `VC`     | No overflow                    |                       | `V == 0`              |
+| `1101`   | `PL`     | Positive or zero               |                       | `N == 0`              |
+| `1110`   | `NG`     | Negative                       |                       | `N == 1`              |
+| `1111`   |          | *Reserved*                     | *Reserved*            |                       |
+
 ## Instructions documentation by types:
 
 ### Load/Store
@@ -123,31 +159,67 @@ Bind a IO register to a specific device. Any write/read instruction will be auto
 
 ### Control
 
+#### BCC
+
+##### Assembler syntax
+
+`BRUHAL label`  
+`BRUHEQ label`  
+`BRUHNE label`  
+`BRUHLO label`  
+`BRUHLT label`  
+`BRUHHI label`  
+`BRUHGT label`  
+`BRUHBL label`  
+`BRUHLE label`  
+`BRUHAB label`  
+`BRUHGE label`  
+`BRUHOV label`  
+`BRUHNO label`  
+`BRUHPL label`  
+`BRUHNG label`  
+
+##### Description
+
+Change the Program Counter value to a label at a PC-relative offset.
+The address is computed by using sum of PC and immdiate in encoding.
+
+##### Psuedo C-code
+
+```c
+PC = PC + imm;
+```
+
 #### BRUHCC
 
+##### Assembler syntax
+
+`BRUHAL RM`  
+`BRUHEQ RM`  
+`BRUHNE RM`  
+`BRUHLO RM`  
+`BRUHLT RM`  
+`BRUHHI RM`  
+`BRUHGT RM`  
+`BRUHBL RM`  
+`BRUHLE RM`  
+`BRUHAB RM`  
+`BRUHGE RM`  
+`BRUHOV RM`  
+`BRUHNO RM`  
+`BRUHPL RM`  
+`BRUHNG RM`  
+
+##### Description
+
 Change the Instruction Pointer to address indicated by register S.
+In other words, performing an absolute jump.
 
-##### CC Code
+##### Psuedo C-code
 
--   Always
--   unsigned less than
--   signed less than
--   unsigned greater than
--   signed greater than
--   unsigned greater than or equal
--   signed greater than or equal
--   unsigned less than or equal
--   signed less than or equal
--   Equal/Zero
--   Inequal/Not-Zero
--   Overflow
--   No overflow
--   Negative
--   Positive or zero
-
-##### Branch target
-
-Support both relative/absolute jump. subroutine: relative. Function call: absolute.
+```c
+PC = RM;
+```
 
 ### Integer
 
