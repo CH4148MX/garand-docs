@@ -70,7 +70,8 @@ As we are writing a multi-core architecture, we are very likely to run into race
 
 As such, at the hardware level, we will implement an atomic locking mechanism that activates when a core writes to a register. The way this works is simple: the first core that writes to a register will have its operations carried out, while the other cores will have to wait until the lock is released. We will keep track of this using a table protected by atomic locks.
 
-Furthermore, we are also going to introduce the concept of register binding for IO registers. The motivation behind this is to create a hassle-free experience for a developer that is interfacing with hardware devices. This will be provided in the form of the `BIND` instruction, which will take an IO-specific register, store the memory address of an IO device (which would likely be mapped to an index) in one of the IO registers, and protects the value in the IO-register from being overwritten. That way, we do not need to do static memory writes to registers.
+Furthermore, we are also going to introduce the concept of register binding for IO registers. The motivation behind this is to create a hassle-free experience for a developer that is interfacing with hardware devices. This will be provided in the form of the `BIND` instruction, which will take an IO-specific register, store the memory address of an IO device (which would likely be mapped to an index) in one of the IO registers, and protect the value in the IO-register from being overwritten. That way, we do not need to do static memory writes, and we can directly write to a register bound to IO. When we are ready to clean up the system, we just use the `UNBIND` instruction, which removes our IO register from the binding table.
+
 
 ### Fetching Model
 As described earlier, our word size is 32 bits. To fully take advantage of this, we will use the `multiple words per instruction` fetch model. This will give us optimal code size while performing relatively efficiently.
@@ -97,7 +98,7 @@ A list of the operation codes can be found here.
 | 00000 | MREAD     |          |
 | 00001 | MWRITE    |          |
 | 00010 | BIND      |          |
-| 00011 |           |          |
+| 00011 | UNBIND    |          |
 | 00100 | BRUH      |          |
 | 00101 | BRUHA     |          |
 | 00110 | ADD       |          |
