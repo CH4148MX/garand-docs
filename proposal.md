@@ -98,8 +98,8 @@ A list of the operation codes can be found here.
 | 00001 | MWRITE    |          |
 | 00010 | BIND      |          |
 | 00011 |           |          |
-| 00100 | BRUH      |          |
-| 00101 | BRUHA     |          |
+| 00100 | BRUH.CC   |          |
+| 00101 | B.CC      |          |
 | 00110 | ADD       |          |
 | 00111 | ADDI      |          |
 | 01000 | SUB       |          |
@@ -146,23 +146,23 @@ However, as you will see in the next section, we will be combining these flags t
 ##### Condtion codes
 
 Condtion codes are used in control instructions to perform conditional branch or jump.
-Current instructions use condition codes are: `BRUHCC`, `BCC`.
+Current instructions use condition codes are: `BRUH.CC`, `B.CC`.
 
 | Encoding | Mnemonic | Meaning(Integer)               | Meaning (Fixed point) | Flag                  |
 | -------- | -------- | ---------------------------    | --------------------- | -------------------   |
-| `0000`   | `AL`     | Always                         |                       | Any                   |
-| `0001`   | `EQ`     | Equal                          |                       | `Z == 0`              |
-| `0010`   | `NE`     | Not equal                      |                       | `Z == 1`              |
+| `0000`   | `AL`     | Always                         | Always                | Any                   |
+| `0001`   | `EQ`     | Equal                          | Equal                 | `Z == 0`              |
+| `0010`   | `NE`     | Not equal                      | Not equal             | `Z == 1`              |
 | `0011`   | `LO`     | Unsigned less than             |                       | `C == 0`              |
-| `0100`   | `LT`     | Signed less than               |                       | `N != V`              |
-| `0101`   | `HI`     | Unsigned greater than          |                       | `C == 1 && Z == 0`    |
-| `0110`   | `GT`     | Signed greater than            |                       | `Z == 0 && N == V`    |
-| `0111`   | `LS`     | Unsigned less than or equal    |                       | `!(C == 1 && Z == 0)` |
-| `1000`   | `LE`     | Signed less than or equal      |                       | `!(Z == 0 && N == V)` |
-| `1001`   | `HS`     | Unsigned greater than or equal |                       | `C == 1`              |
-| `1010`   | `GE`     | Signed greater than or equal   |                       | `N == V`              |
-| `1011`   | `VS`     | Overflow                       |                       | `V == 1`              |
-| `1100`   | `VC`     | No overflow                    |                       | `V == 0`              |
+| `0100`   | `HS`     | Unsigned greater than or equal |                       | `C == 1`              |
+| `0101`   | `LT`     | Signed less than               | Less than             | `N != V`              |
+| `0110`   | `GE`     | Signed greater than or equal   | Greater than or equal | `N == V`              |
+| `0111`   | `HI`     | Unsigned greater than          |                       | `C == 1 && Z == 0`    |
+| `1000`   | `LS`     | Unsigned less than or equal    |                       | `!(C == 1 && Z == 0)` |
+| `1001`   | `GT`     | Signed greater than            | Greater than          | `Z == 0 && N == V`    |
+| `1010`   | `LE`     | Signed less than or equal      | Less than or equal    | `!(Z == 0 && N == V)` |
+| `1011`   | `VC`     | No overflow                    | Ordered               | `V == 0`              |
+| `1100`   | `VS`     | Overflow                       | Unordered             | `V == 1`              |
 | `1101`   | `PL`     | Positive or zero               |                       | `N == 0`              |
 | `1110`   | `NG`     | Negative                       |                       | `N == 1`              |
 | `1111`   |          | *Reserved*                     | *Reserved*            |                       |
@@ -180,13 +180,13 @@ Current instructions use condition codes are: `BRUHCC`, `BCC`.
 ##### Description
 
 Read from memory address and store value in register X. The memory address
-is calculated by base value from register M, plus 4 times of offset value from
+is calculated by base value from register M, plus the offset value from
 register N.
 
 ##### Psuedo C-code
 
 ```c
-RX = RM[RN << 2];
+RX = RM[RN];
 ```
 
 #### MRITE
@@ -197,45 +197,40 @@ RX = RM[RN << 2];
 
 ##### Description
 Write to memory address using value stored in register X. The memory address
-is calculated by base value from register M, plus 4 times offset value from
+is calculated by base value from register M, plus the offset value from
 register N.
 
 ##### Psuedo C-code
 
 ```c
-RM[RN << 2] = RX;
+RM[RN] = RX;
 ```
 
 #### BIND
 
-Bind a IO register to a specific device. Any write/read instruction will be automatically forwarded to the IO device.
+##### Assembler syntax
+
+`BIND   IX, #imm`
+
+##### Description
+
+Bind a IO-specific register to a specific IO device memory.
+IO device at address `imm` will be write-protected.
+See _Binding & Locking_ section for more details.
 
 ### Control
 
-#### BCC
+#### B.CC
 
 ##### Assembler syntax
 
-`BRUHAL label`  
-`BRUHEQ label`  
-`BRUHNE label`  
-`BRUHLO label`  
-`BRUHLT label`  
-`BRUHHI label`  
-`BRUHGT label`  
-`BRUHBL label`  
-`BRUHLE label`  
-`BRUHAB label`  
-`BRUHGE label`  
-`BRUHOV label`  
-`BRUHNO label`  
-`BRUHPL label`  
-`BRUHNG label`  
+`B.CC   label`  
 
 ##### Description
 
 Change the Program Counter value to a label at a PC-relative offset.
 The address is computed by using sum of PC and immdiate in encoding.
+The `CC` represents one of the condition codes defined in _Condition Encoding_ section.
 
 ##### Psuedo C-code
 
@@ -243,30 +238,17 @@ The address is computed by using sum of PC and immdiate in encoding.
 PC = PC + imm;
 ```
 
-#### BRUHCC
+#### BRUH.CC
 
 ##### Assembler syntax
 
-`BRUHAL RM`  
-`BRUHEQ RM`  
-`BRUHNE RM`  
-`BRUHLO RM`  
-`BRUHLT RM`  
-`BRUHHI RM`  
-`BRUHGT RM`  
-`BRUHBL RM`  
-`BRUHLE RM`  
-`BRUHAB RM`  
-`BRUHGE RM`  
-`BRUHOV RM`  
-`BRUHNO RM`  
-`BRUHPL RM`  
-`BRUHNG RM`  
+`BRUH.CC RM`  
 
 ##### Description
 
 Change the Instruction Pointer to address indicated by register S.
 In other words, performing an absolute jump.
+The `CC` represents one of the condition codes defined in _Condition Encoding_ section.
 
 ##### Psuedo C-code
 
@@ -399,7 +381,7 @@ RX = RM / RN;
 
 ##### Assembler syntax
 
-`DIVI   RX, RM, imm`
+`DIVI   RX, RM, #imm`
 
 ##### Description
 
@@ -428,6 +410,39 @@ Add the product with register X, then store the sum in register X.
 ```c
 RX = RX * (RM + RN);
 ```
+
+#### CMP
+
+##### Assembler syntax
+
+`CMP    RM, RN`
+
+##### Description
+
+Compare two registers M and N, then update corresponding flags
+in Condition Flag register.
+
+#### CMPI
+
+##### Assembler syntax
+
+`CMPI   RM, #imm`
+
+##### Description
+
+Compare register M and immediate value and update corresponding flags
+in Condition Flag register.
+
+#### TEST
+
+##### Assembler syntax
+
+`TEST   RM, RN`
+
+##### Description
+
+Calculate bitwise AND on two registers M and N and update corresponding flags
+in Condition Flag register.
 
 #### AND
 
