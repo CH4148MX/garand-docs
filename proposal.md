@@ -108,18 +108,18 @@ A list of the operation codes can be found here.
 | 01011 | MULI      |          |
 | 01100 | DIV       |          |
 | 01101 | DIVI      |          |
-| 01110 | AND       |          |
-| 01111 | NAND      |          |
-| 10000 | OR        |          |
-| 10001 | XOR       |          |
-| 10010 | LSL       |          |
-| 10011 | LSR       |          |
-| 10100 | NOT       |          |
-| 10101 | RSR       |          |
-| 10110 |           |          |
-| 10111 |           |          |
-| 11000 |           |          |
-| 11001 |           |          |
+| 01110 | CMP       |          |
+| 01111 | CMPI      |          |
+| 10000 | TEST      |          |
+| 10001 | AND       |          |
+| 10010 | NAND      |          |
+| 10011 | OR        |          |
+| 10100 | XOR       |          |
+| 10101 | LSL       |          |
+| 10110 | LSR       |          |
+| 10111 | NOT       |          |
+| 11000 | RSR       |          |
+| 11001 | MADD      |          |
 | 11010 |           |          |
 | 11011 |           |          |
 | 11100 |           |          |
@@ -161,8 +161,8 @@ Current instructions use condition codes are: `BRUH.CC`, `B.CC`.
 | `1000`   | `LS`     | Unsigned less than or equal    |                       | `!(C == 1 && Z == 0)` |
 | `1001`   | `GT`     | Signed greater than            | Greater than          | `Z == 0 && N == V`    |
 | `1010`   | `LE`     | Signed less than or equal      | Less than or equal    | `!(Z == 0 && N == V)` |
-| `1011`   | `VC`     | No overflow                    | Ordered               | `V == 0`              |
-| `1100`   | `VS`     | Overflow                       | Unordered             | `V == 1`              |
+| `1011`   | `VC`     | No overflow                    |                       | `V == 0`              |
+| `1100`   | `VS`     | Overflow                       |                       | `V == 1`              |
 | `1101`   | `PL`     | Positive or zero               |                       | `N == 0`              |
 | `1110`   | `NG`     | Negative                       |                       | `N == 1`              |
 | `1111`   |          | *Reserved*                     | *Reserved*            |                       |
