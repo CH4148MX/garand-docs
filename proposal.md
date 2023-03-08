@@ -37,7 +37,7 @@ Our architecture defines two types of integers:
 #### Fixed Point 
 In graphics, precision in calculations is fundamental; from raytracing, to interpolation, etc. As such, it is fundamental that, for a graphics-based architecture, we have some sort of mechanism for precise calculations. Therefore, we will be implementing fixed point precision.
 
-For our implementation of fixed point, we will reserve the lower 23 bits of a word to store our __fractional__, which is the number that comes after the decimal point. Our _exponent_, which is 8 bits, will immediately follow the mantissa in bit order, taking bits 23 through 30 inclusive. Finally, the most significant bit (which is bit 31) will act as a signage bit, allowing us to have positive and negative fixed-point values.
+For our implementation of fixed point, we will reserve the lower 23 bits of a word to store our __fractional__, which is the number that comes after the decimal point. Our _exponent_, which is 8 bits, will immediately follow the __fractional__ in bit order, taking bits 23 through 30 inclusive. Finally, the most significant bit (which is bit 31) will act as a signage bit, allowing us to have positive and negative fixed-point values.
 
 A detailed diagram of this can be seen below.
 
@@ -47,13 +47,13 @@ As these numbers require special treatment, we will implement instructions speci
 
 ### Registers
 Our architecture is designed to support 36 total registers. The breakdown is as follows:
-- 16 General-Purpose Registers (frontend syntax `R##`).
-- 16 IO-specific registers (frontend syntax: `I##`)
+- 16 General-Purpose Registers (assembler syntax `R##`).
+- 16 IO-specific registers (assembler syntax: `I##`)
 - 4 special purpose registers:
-    - Condition Flag (frontend syntax: `CND`) - Used to store and procure the results of carry, overflow, or other conditional operations.
-    - Program Counter (frontend syntax: `PC`) - Points to the currently executed instruction.
-    - Link Register (frontend syntax: `LR`) - Commonly stores an address to a function (used in the caller-callee specification).
-    - Stack Pointer (frontend syntax: `SP`) - Points to a currently used space on the stack.
+    - Condition Flag (assembler syntax: `CND`) - Used to store and procure the results of carry, overflow, or other conditional operations.
+    - Program Counter (assembler syntax: `PC`) - Points to the currently executed instruction.
+    - Link Register (assembler syntax: `LR`) - Commonly stores an address to a function (used in the caller-callee specification).
+    - Stack Pointer (assembler syntax: `SP`) - Points to a currently used space on the stack.
 
 Each of these registers uses a single word (32 bits) as its underlying data type.
 
@@ -62,11 +62,11 @@ Each of these registers uses a single word (32 bits) as its underlying data type
 | Name  | Size (bits) | Encoding  | Description                    |
 | ----- | ---- | -------- | ------------------------------ |
 | `R##` | 32   | 0-15     | General-Purpose Registers 0-15 |
-| `I##` | 32   | 0-15     | IO-specific Registers 0-15     |
+| `I##` | 32   |          | IO-specific Registers 0-15     |
 | `SP`  | 32   | 16       | Stack Pointer                  |
 
 #### Binding & Locking
-As we are writing a multi-core architecture, we are very likely to run into race conditions when writing to/reading from registers. 
+As we are writing a multi-core architecture, we are very likely to run into race conditions when writing to/reading from registers. A special feature in each core is thus needed.
 
 As such, at the hardware level, we will implement an atomic locking mechanism that activates when a core writes to a register. The way this works is simple: the first core that writes to a register will have its operations carried out, while the other cores will have to wait until the lock is released. We will keep track of this using a table protected by atomic locks.
 
@@ -74,14 +74,21 @@ Furthermore, we are also going to introduce the concept of register binding for 
 
 
 ### Fetching Model
-As described earlier, our word size is 32 bits. To fully take advantage of this, we will use the `multiple words per instruction` fetch model. This will give us optimal code size while performing relatively efficiently.
+As described earlier, our word size is 32 bits. To fully take advantage of this, we will use the `multiple words per instruction` fetch model. This will give us optimal code size while performing relatively efficiently. The only way to fetch data to/from memory is Load and Store.
+The corresponding instructions for the two operations are: `MREAD`, `MWRITE`.
 
 ### Memory Architecture
 We want to keep our instruction and data memory together; as such, we will use the _Princeton_ architecture.
 
 ### Addressing Modes
-- Load-Store: for memory load/store instructions only.
-- Register, Immediate, PC + Immediate Offset (PC Relative): for the rest of the instructions.
+
+Our architecture supports 2 types of address modes:
+- Register: Register value will be read and used as address for the next execution
+of the processor. For instruction details, see `BRUH.CC`
+- PC + Immediate Offset (PC Relative): Address for the next execution
+of the processor will be calculated using Program Counter (current address) plus
+specified offset immediate. This is the recommended method for subroutine branching.
+For instruction details, see `B.CC`
 
 ### Instructions
 
@@ -99,8 +106,8 @@ A list of the operation codes can be found here.
 | 00001 | MWRITE    |          |
 | 00010 | BIND      |          |
 | 00011 | UNBIND    |          |
-| 00100 | BRUH      |          |
-| 00101 | BRUHA     |          |
+| 00100 | BRUH.CC   |          |
+| 00101 | B.CC      |          |
 | 00110 | ADD       |          |
 | 00111 | ADDI      |          |
 | 01000 | SUB       |          |
@@ -109,24 +116,24 @@ A list of the operation codes can be found here.
 | 01011 | MULI      |          |
 | 01100 | DIV       |          |
 | 01101 | DIVI      |          |
-| 01110 | AND       |          |
-| 01111 | NAND      |          |
-| 10000 | OR        |          |
-| 10001 | XOR       |          |
-| 10010 | LSL       |          |
-| 10011 | LSR       |          |
-| 10100 | NOT       |          |
-| 10101 | RSR       |          |
-| 10110 |           |          |
-| 10111 |           |          |
-| 11000 |           |          |
-| 11001 |           |          |
+| 01110 | CMP       |          |
+| 01111 | CMPI      |          |
+| 10000 | TEST      |          |
+| 10001 | AND       |          |
+| 10010 | NAND      |          |
+| 10011 | OR        |          |
+| 10100 | XOR       |          |
+| 10101 | LSL       |          |
+| 10110 | LSR       |          |
+| 10111 | NOT       |          |
+| 11000 | RSR       |          |
+| 11001 | MADD      |          |
 | 11010 |           |          |
 | 11011 |           |          |
 | 11100 |           |          |
 | 11101 |           |          |
 | 11110 |           |          |
-| 11111 |           |          |
+| 11111 | NOP       |          |
 
 
 #### Condition encoding
@@ -147,23 +154,23 @@ However, as you will see in the next section, we will be combining these flags t
 ##### Condtion codes
 
 Condtion codes are used in control instructions to perform conditional branch or jump.
-Current instructions use condition codes are: `BRUHCC`, `BCC`.
+Current instructions use condition codes are: `BRUH.CC`, `B.CC`.
 
 | Encoding | Mnemonic | Meaning(Integer)               | Meaning (Fixed point) | Flag                  |
 | -------- | -------- | ---------------------------    | --------------------- | -------------------   |
-| `0000`   | `AL`     | Always                         |                       | Any                   |
-| `0001`   | `EQ`     | Equal                          |                       | `Z == 0`              |
-| `0010`   | `NE`     | Not equal                      |                       | `Z == 1`              |
+| `0000`   | `AL`     | Always                         | Always                | Any                   |
+| `0001`   | `EQ`     | Equal                          | Equal                 | `Z == 0`              |
+| `0010`   | `NE`     | Not equal                      | Not equal             | `Z == 1`              |
 | `0011`   | `LO`     | Unsigned less than             |                       | `C == 0`              |
-| `0100`   | `LT`     | Signed less than               |                       | `N != V`              |
-| `0101`   | `HI`     | Unsigned greater than          |                       | `C == 1 && Z == 0`    |
-| `0110`   | `GT`     | Signed greater than            |                       | `Z == 0 && N == V`    |
-| `0111`   | `LS`     | Unsigned less than or equal    |                       | `!(C == 1 && Z == 0)` |
-| `1000`   | `LE`     | Signed less than or equal      |                       | `!(Z == 0 && N == V)` |
-| `1001`   | `HS`     | Unsigned greater than or equal |                       | `C == 1`              |
-| `1010`   | `GE`     | Signed greater than or equal   |                       | `N == V`              |
-| `1011`   | `VS`     | Overflow                       |                       | `V == 1`              |
-| `1100`   | `VC`     | No overflow                    |                       | `V == 0`              |
+| `0100`   | `HS`     | Unsigned greater than or equal |                       | `C == 1`              |
+| `0101`   | `LT`     | Signed less than               | Less than             | `N != V`              |
+| `0110`   | `GE`     | Signed greater than or equal   | Greater than or equal | `N == V`              |
+| `0111`   | `HI`     | Unsigned greater than          |                       | `C == 1 && Z == 0`    |
+| `1000`   | `LS`     | Unsigned less than or equal    |                       | `!(C == 1 && Z == 0)` |
+| `1001`   | `GT`     | Signed greater than            | Greater than          | `Z == 0 && N == V`    |
+| `1010`   | `LE`     | Signed less than or equal      | Less than or equal    | `!(Z == 0 && N == V)` |
+| `1011`   | `VC`     | No overflow                    |                       | `V == 0`              |
+| `1100`   | `VS`     | Overflow                       |                       | `V == 1`              |
 | `1101`   | `PL`     | Positive or zero               |                       | `N == 0`              |
 | `1110`   | `NG`     | Negative                       |                       | `N == 1`              |
 | `1111`   |          | *Reserved*                     | *Reserved*            |                       |
@@ -181,62 +188,58 @@ Current instructions use condition codes are: `BRUHCC`, `BCC`.
 ##### Description
 
 Read from memory address and store value in register X. The memory address
-is calculated by base value from register M, plus 4 times of offset value from
+is calculated by base value from register M, plus the offset value from
 register N.
 
 ##### Psuedo C-code
 
 ```c
-RX = RM[RN << 2];
+RX = RM[RN];
 ```
 
-#### MRITE
+#### MWRITE
 
 ##### Assembler syntax
 
-`MRITE   RX, RM, RN`
+`MWRITE   RX, RM, RN`
 
 ##### Description
 Write to memory address using value stored in register X. The memory address
-is calculated by base value from register M, plus 4 times offset value from
+is calculated b using base value from register M, plus the offset value from
 register N.
 
 ##### Psuedo C-code
 
 ```c
-RM[RN << 2] = RX;
+RM[RN] = RX;
 ```
 
 #### BIND
 
-Bind a IO register to a specific device. Any write/read instruction will be automatically forwarded to the IO device.
-
-### Control
-
-#### BCC
-
 ##### Assembler syntax
 
-`BRUHAL label`  
-`BRUHEQ label`  
-`BRUHNE label`  
-`BRUHLO label`  
-`BRUHLT label`  
-`BRUHHI label`  
-`BRUHGT label`  
-`BRUHBL label`  
-`BRUHLE label`  
-`BRUHAB label`  
-`BRUHGE label`  
-`BRUHOV label`  
-`BRUHNO label`  
-`BRUHPL label`  
-`BRUHNG label`  
+`BIND   IX, #imm`
 
 ##### Description
 
-Change the Program Counter value to a label at a PC-relative offset.
+Bind a IO-specific register to a specific IO device memory.
+IO device at address `imm` will be write-protected.
+See _Binding & Locking_ section for more details.
+
+### Control
+
+#### B.CC
+
+##### Assembler syntax
+
+`B.CC   label`  
+
+##### Description
+
+Change the Program Counter value to a label at a PC-relative offset if the condition
+matches the Condition Flag registers, else this is a no-op.
 The address is computed by using sum of PC and immdiate in encoding.
+The condition `CC` represents one of the condition codes defined in _Condition Encoding_ section.
 
 ##### Psuedo C-code
 
@@ -244,30 +247,18 @@ The address is computed by using sum of PC and immdiate in encoding.
 PC = PC + imm;
 ```
 
-#### BRUHCC
+#### BRUH.CC
 
 ##### Assembler syntax
 
-`BRUHAL RM`  
-`BRUHEQ RM`  
-`BRUHNE RM`  
-`BRUHLO RM`  
-`BRUHLT RM`  
-`BRUHHI RM`  
-`BRUHGT RM`  
-`BRUHBL RM`  
-`BRUHLE RM`  
-`BRUHAB RM`  
-`BRUHGE RM`  
-`BRUHOV RM`  
-`BRUHNO RM`  
-`BRUHPL RM`  
-`BRUHNG RM`  
+`BRUH.CC RM`  
 
 ##### Description
 
-Change the Instruction Pointer to address indicated by register S.
-In other words, performing an absolute jump.
+Change the Instruction Pointer to address indicated by register M if the condition
+matches the Condition Flag registers, else this is a no-op.
+In other words, this instruction performs an absolute jump.
+The condition `CC` represents one of the condition codes defined in _Condition Encoding_ section.
 
 ##### Psuedo C-code
 
@@ -400,7 +391,7 @@ RX = RM / RN;
 
 ##### Assembler syntax
 
-`DIVI   RX, RM, imm`
+`DIVI   RX, RM, #imm`
 
 ##### Description
 
@@ -429,6 +420,39 @@ Add the product with register X, then store the sum in register X.
 ```c
 RX = RX * (RM + RN);
 ```
+
+#### CMP
+
+##### Assembler syntax
+
+`CMP    RM, RN`
+
+##### Description
+
+Compare two registers M and N, then update corresponding flags
+in Condition Flag register.
+
+#### CMPI
+
+##### Assembler syntax
+
+`CMPI   RM, #imm`
+
+##### Description
+
+Compare register M and immediate value and update corresponding flags
+in Condition Flag register.
+
+#### TEST
+
+##### Assembler syntax
+
+`TEST   RM, RN`
+
+##### Description
+
+Calculate bitwise AND on two registers M and N and update corresponding flags
+in Condition Flag register.
 
 #### AND
 
@@ -612,3 +636,28 @@ Break execution. In the simulator, the processor must pause processing after thi
 ##### Description
 
 Stop all execution. In the simulator, the processor must stop processing at this point and exit the program.
+
+#### NOP
+
+##### Assembler syntax
+
+`NOP`
+
+##### Description
+
+No-operation. The processor will not perform any operation on this instruction
+other than increasing PC.
+
+## Management Plan
+
+The simulator for Garand is written in C++, using C++20 standard.
+All the team members use VS Code to develop the project.
+Dear ImGui library is used to provide Graphical User Interface (GUI) for the simulator.
+The source code and this document are version-controlled and hosted on Github.
+Issues and To-do lists are also maintained on Github.
+
+Our main communication line is Discord. Thrice a week, we will meet in CICS Makerspace to review project progress and discuss next week plan.
+
+Generally, we aim to share project works equally between members of the team.
+At the simulator building stage,...
+At the benchmark stage,...
