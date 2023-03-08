@@ -47,13 +47,13 @@ As these numbers require special treatment, we will implement instructions speci
 
 ### Registers
 Our architecture is designed to support 36 total registers. The breakdown is as follows:
-- 16 General-Purpose Registers (frontend syntax `R##`).
-- 16 IO-specific registers (frontend syntax: `I##`)
+- 16 General-Purpose Registers (assembler syntax `R##`).
+- 16 IO-specific registers (assembler syntax: `I##`)
 - 4 special purpose registers:
-    - Condition Flag (frontend syntax: `CND`) - Used to store and procure the results of carry, overflow, or other conditional operations.
-    - Program Counter (frontend syntax: `PC`) - Points to the currently executed instruction.
-    - Link Register (frontend syntax: `LR`) - Commonly stores an address to a function (used in the caller-callee specification).
-    - Stack Pointer (frontend syntax: `SP`) - Points to a currently used space on the stack.
+    - Condition Flag (assembler syntax: `CND`) - Used to store and procure the results of carry, overflow, or other conditional operations.
+    - Program Counter (assembler syntax: `PC`) - Points to the currently executed instruction.
+    - Link Register (assembler syntax: `LR`) - Commonly stores an address to a function (used in the caller-callee specification).
+    - Stack Pointer (assembler syntax: `SP`) - Points to a currently used space on the stack.
 
 Each of these registers uses a single word (32 bits) as its underlying data type.
 
@@ -62,7 +62,7 @@ Each of these registers uses a single word (32 bits) as its underlying data type
 | Name  | Size (bits) | Encoding  | Description                    |
 | ----- | ---- | -------- | ------------------------------ |
 | `R##` | 32   | 0-15     | General-Purpose Registers 0-15 |
-| `I##` | 32   | 0-15     | IO-specific Registers 0-15     |
+| `I##` | 32   |          | IO-specific Registers 0-15     |
 | `SP`  | 32   | 16       | Stack Pointer                  |
 
 #### Binding & Locking
@@ -639,3 +639,17 @@ Stop all execution. In the simulator, the processor must stop processing at this
 
 No-operation. The processor will not do anything on this instruction other than
 increasing PC.
+
+## Management Plan
+
+The simulator for Garand is written in C++, using C++20 standard.
+All the team member use VS Code to develop the project.
+Dear ImGui library is used to provide Graphical User Interface (GUI) for the simulator.
+The source code and this document are version-controlled and hosted on Github.
+Issues and To-do lists are also maintained on Github.
+
+Our main communication line is Discord. Thrice a week, we will meet in CICS Makerspace to review project progress and discuss next week plan.
+
+Generally, we aim to share project works equally between members of the team.
+At the simulator building stage,...
+At the benchmark stage,...
