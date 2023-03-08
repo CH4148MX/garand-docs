@@ -309,8 +309,10 @@ PC = RM;
 
 ##### Description
 
-Calculate the two's complement 32-bit sum of two registers M and N.
+For integer version: Calculate the two's complement 32-bit sum of two registers M and N.
 Store the result in register X.
+
+Fixed-point version with `FX_` prefix will do similar calculation, but compute on and return fixed point number instead. 
 
 ##### Psuedo C-code
 
@@ -326,8 +328,10 @@ RX = RM + RN;
 
 ##### Description
 
-Calculate the two's complement 32-bit sum of register M and immediate.
+For integer version: Calculate the two's complement 32-bit sum of register M and immediate.
 Store the result in register X.
+
+Fixed-point version with `FX_` prefix will do similar calculation, but compute on and return fixed point number instead. 
 
 ##### Psuedo C-code
 
@@ -343,8 +347,10 @@ RX = RM + imm;
 
 ##### Description
 
-Calculate the two's complement 32-bit difference of two registers M and N.
+For integer version: Calculate the two's complement 32-bit difference of two registers M and N.
 Store the result in register X.
+
+Fixed-point version with `FX_` prefix will do similar calculation, but compute on and return fixed point number instead. 
 
 ##### Psuedo C-code
 
@@ -360,8 +366,10 @@ RX = RM - RN;
 
 ##### Description
 
-Calculate the two's complement 32-bit difference of register M and immediate.
+For integer version: Calculate the two's complement 32-bit difference of register M and immediate.
 Store the result in register X.
+
+Fixed-point version with `FX_` prefix will do similar calculation, but compute on and return fixed point number instead. 
 
 ##### Psuedo C-code
 
@@ -377,8 +385,10 @@ RX = RM - imm;
 
 ##### Description
 
-Calculate the two's complement 32-bit product of registers M and N.
+For integer version: Calculate the two's complement 32-bit product of registers M and N.
 Store the result in register X.
+
+Fixed-point version with `FX_` prefix will do similar calculation, but compute on and return fixed point number instead. 
 
 ##### Psuedo C-code
 
@@ -394,8 +404,10 @@ RX = RM * RN;
 
 ##### Description
 
-Calculate the two's complement 32-bit product of register M and immediate.
+For integer version: Calculate the two's complement 32-bit product of register M and immediate.
 Store the result in register X.
+
+Fixed-point version with `FX_` prefix will do similar calculation, but compute on and return fixed point number instead. 
 
 ##### Psuedo C-code
 
@@ -411,8 +423,10 @@ RX = RM * imm;
 
 ##### Description
 
-Calculate the two's complement 32-bit quotient of registers M and N.
+For integer version: Calculate the two's complement 32-bit quotient of registers M and N.
 Store the result in register X.
+
+Fixed-point version with `FX_` prefix will do similar calculation, but compute on and return fixed point number instead. 
 
 ##### Psuedo C-code
 
@@ -428,8 +442,10 @@ RX = RM / RN;
 
 ##### Description
 
-Calculate the two's complement 32-bit quotient of register M and immediate.
+For integer version: Calculate the two's complement 32-bit quotient of register M and immediate.
 Store the result in register X.
+
+Fixed-point version with `FX_` prefix will do similar calculation, but compute on and return fixed point number instead. 
 
 ##### Psuedo C-code
 
@@ -445,8 +461,10 @@ RX = RM / imm;
 
 ##### Description
 
-Calculate the two's complement 32-bit product of registers M and N.
+For integer version: Calculate the two's complement 32-bit product of registers M and N.
 Add the product with register X, then store the sum in register X.
+
+Fixed-point version with `FX_` prefix will do similar calculation, but compute on and return fixed point number instead. 
 
 ##### Psuedo C-code
 
