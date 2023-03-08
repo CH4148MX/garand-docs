@@ -17,14 +17,18 @@ The Garand Architecture is a special-purpose architecture designed with gaming a
 ### Word Size
 Our word size is 32 bits, which makes a half word 16 bits, a double word 64 bits, and so on.
 
-### Memory Paging
-We will implement a multi-level page table that allows us to have a proper virtual memory system, so we can run subprocesses in peace. The structure of our page table will be detailed below.
+<!-- ### Memory Paging
+We will implement a multi-level page table that allows us to have a proper virtual memory system, so we can run subprocesses in peace. The structure of our page table will be detailed below. -->
 
 ### Memory Caching
-We will use a n-way set associative cache. This will help us reduce the potential for conflicts when searching for data in a cache. 
+We will use a direct mapped cache. This will keep our cache implementation simple, although with decreased performance. Our cache will also use the Modified Shared Invalid (MSI) protocol to ensure cache coherency in our multi-core architecture.
 
 The implementation of our table is as follows:
 
+| Tag  | Index | Dirty | Offset |
+| ---- | ----- | ----- | ------ |
+| 0    | 00000   | 0-1  | 00000 |
+| 10100 | 1000000 | 0-1 | 1000000 |
 
 ### Data Types
 In terms of data types, we aim to support two distinct numerical types: integer and fixed point.
@@ -32,12 +36,12 @@ In terms of data types, we aim to support two distinct numerical types: integer 
 #### Integer
 Our architecture defines two types of integers:
 - A 32 bit unsigned integer, with the range [0, $2^{32}-1$].
-- A 32 bit signed integer. To simulate the negative range of numbers, our instruction set architecture will use two's complement to store distinct numbers. Therefore, our range is [($-2^{31}$), ($2^{31}-1$)], or [-2147483648, 2147483647]. All operations which operate on unsigned numbers will support operations on the signed equivalents, but sign extension will be performed to maintain proper two's complement support.
+- A 32 bit signed integer. To simulate the negative range of numbers, our instruction set architecture will use two's complement to store distinct numbers. Therefore, our range is [$-2^{31}$, $2^{31}-1$], or [-2147483648, 2147483647]. All operations which operate on unsigned numbers will support operations on the signed equivalents, but sign extension will be performed to maintain proper two's complement support.
 
 #### Fixed Point 
 In graphics, precision in calculations is fundamental; from raytracing, to interpolation, etc. As such, it is fundamental that, for a graphics-based architecture, we have some sort of mechanism for precise calculations. Therefore, we will be implementing fixed point precision.
 
-For our implementation of fixed point, we will reserve the lower 23 bits of a word to store our __fractional__, which is the number that comes after the decimal point. Our _exponent_, which is 8 bits, will immediately follow the __fractional__ in bit order, taking bits 23 through 30 inclusive. Finally, the most significant bit (which is bit 31) will act as a signage bit, allowing us to have positive and negative fixed-point values.
+For our implementation of fixed point, we will reserve the lower 23 bits of a word to store our _fractional_, which is the number that comes after the decimal point. Our _exponent_, which is 8 bits, will immediately follow the _fractional_ in bit order, taking bits 23 through 30 inclusive. Finally, the most significant bit (which is bit 31) will act as a signage bit, allowing us to have positive and negative fixed-point values.
 
 A detailed diagram of this can be seen below.
 
@@ -59,11 +63,13 @@ Each of these registers uses a single word (32 bits) as its underlying data type
 
 #### Encoding
 
-| Name  | Size (bits) | Encoding  | Description                    |
-| ----- | ---- | -------- | ------------------------------ |
-| `R##` | 32   | 0-15     | General-Purpose Registers 0-15 |
-| `I##` | 32   |          | IO-specific Registers 0-15     |
-| `SP`  | 32   | 16       | Stack Pointer                  |
+| Name  | Size (bits) | Encoding | Description                    |
+| ----- | ----------- | -------- | ------------------------------ |
+| `R##` | 32          | 0-15     | General-Purpose Registers 0-15 |
+| `I##` | 32          | 16-31    | IO-specific Registers 0-15     |
+| `SP`  | 32          | 32       | Stack Pointer                  |
+| `PC`  | 32          | 33       | Program Counter                |
+| `LR`  | 32          | 34       | Link Register                  |
 
 #### Binding & Locking
 As we are writing a multi-core architecture, we are very likely to run into race conditions when writing to/reading from registers. A special feature in each core is thus needed.
@@ -100,40 +106,51 @@ When choosing the encoding for this architecture, we wanted to go for an approac
 
 #### Operation Codes
 A list of the operation codes can be found here.
-| Index | Operation | Encoding |
-|-------|-----------|----------|
-| 00000 | MREAD     |          |
-| 00001 | MWRITE    |          |
-| 00010 | BIND      |          |
-| 00011 | UNBIND    |          |
-| 00100 | BRUH.CC   |          |
-| 00101 | B.CC      |          |
-| 00110 | ADD       |          |
-| 00111 | ADDI      |          |
-| 01000 | SUB       |          |
-| 01001 | SUBI      |          |
-| 01010 | MUL       |          |
-| 01011 | MULI      |          |
-| 01100 | DIV       |          |
-| 01101 | DIVI      |          |
-| 01110 | CMP       |          |
-| 01111 | CMPI      |          |
-| 10000 | TEST      |          |
-| 10001 | AND       |          |
-| 10010 | NAND      |          |
-| 10011 | OR        |          |
-| 10100 | XOR       |          |
-| 10101 | LSL       |          |
-| 10110 | LSR       |          |
-| 10111 | NOT       |          |
-| 11000 | RSR       |          |
-| 11001 | MADD      |          |
-| 11010 |           |          |
-| 11011 |           |          |
-| 11100 |           |          |
-| 11101 |           |          |
-| 11110 |           |          |
-| 11111 | NOP       |          |
+| Opcode |Condition  | Operation |
+| ------ | --------- | --------- |
+| 000000 | 0000      | MREAD     |
+| 000000 | 0001      | MWRITE    |
+| 000000 | 0010      | BIND      |
+| 000000 | 0011      | UNBIND    |
+| 000001 | 0000      | BRUH.CC   |
+| 000001 | 0001      | B.CC      |
+| 000100 | 0000      | ADD       |
+| 000100 | 0001      | ADDI      |
+| 000101 | 0000      | SUB       |
+| 000101 | 0001      | SUBI      |
+| 000101 | 0010      | CMP       |
+| 000101 | 0011      | CMPI      |
+| 000110 | 0000      | MUL       |
+| 000110 | 0001      | MULI      |
+| 000111 | 0000      | DIV       |
+| 000111 | 0001      | DIVI      |
+| 001000 | 0000      | AND       |
+| 001000 | 0001      | ANDI      |
+| 001000 | 0010      | TEST      |
+| 001001 | 0000      | NAND      |
+| 001001 | 0001      | NANDI     |
+| 001010 | 0000      | OR        |
+| 001010 | 0001      | ORI       |
+| 001011 | 0000      | XOR       |
+| 001011 | 0001      | XORI      |
+| 001100 | 0000      | LSL       |
+| 001100 | 0001      | LSLI      |
+| 001101 | 0000      | LSR       |
+| 001101 | 0001      | LSRI      |
+| 001110 | 0000      | RSR       |
+| 001110 | 0001      | RSRI      |
+| 010000 |           | NOT       |
+| 010001 |           | MADD      |
+| 100100 | 0000      | FX_ADD    |
+| 100100 | 0001      | FX_ADDI   |
+| 100101 | 0000      | FX_SUB    |
+| 100101 | 0001      | FX_SUBI   |
+| 100101 | 0010      | FX_CMP    |
+| 100101 | 0011      | FX_CMPI   |
+| 100110 | 0000      | FX_MUL    |
+| 101011 | 0001      | FX_MULI   |
+| 101100 | 0000      | FX_DIV    |
+| 101101 | 0001      | FX_DIVI   |
 
 
 #### Condition encoding
@@ -151,31 +168,31 @@ The layout for each of these flags in our condition fields is as follows:
 
 However, as you will see in the next section, we will be combining these flags to implement condition codes.
 
-##### Condtion codes
+##### Condition codes
 
 Condtion codes are used in control instructions to perform conditional branch or jump.
 Current instructions use condition codes are: `BRUH.CC`, `B.CC`.
 
-| Encoding | Mnemonic | Meaning(Integer)               | Meaning (Fixed point) | Flag                  |
-| -------- | -------- | ---------------------------    | --------------------- | -------------------   |
-| `0000`   | `AL`     | Always                         | Always                | Any                   |
-| `0001`   | `EQ`     | Equal                          | Equal                 | `Z == 0`              |
-| `0010`   | `NE`     | Not equal                      | Not equal             | `Z == 1`              |
-| `0011`   | `LO`     | Unsigned less than             |                       | `C == 0`              |
-| `0100`   | `HS`     | Unsigned greater than or equal |                       | `C == 1`              |
-| `0101`   | `LT`     | Signed less than               | Less than             | `N != V`              |
-| `0110`   | `GE`     | Signed greater than or equal   | Greater than or equal | `N == V`              |
-| `0111`   | `HI`     | Unsigned greater than          |                       | `C == 1 && Z == 0`    |
-| `1000`   | `LS`     | Unsigned less than or equal    |                       | `!(C == 1 && Z == 0)` |
-| `1001`   | `GT`     | Signed greater than            | Greater than          | `Z == 0 && N == V`    |
-| `1010`   | `LE`     | Signed less than or equal      | Less than or equal    | `!(Z == 0 && N == V)` |
-| `1011`   | `VC`     | No overflow                    |                       | `V == 0`              |
-| `1100`   | `VS`     | Overflow                       |                       | `V == 1`              |
-| `1101`   | `PL`     | Positive or zero               |                       | `N == 0`              |
-| `1110`   | `NG`     | Negative                       |                       | `N == 1`              |
-| `1111`   |          | *Reserved*                     | *Reserved*            |                       |
+| Encoding | Mnemonic | Meaning(Integer)               | Flag                  |
+| -------- | -------- | ------------------------------ | --------------------- |
+| `0000`   | `AL`     | Always                         | Any                   |
+| `0001`   | `EQ`     | Equal                          | `Z == 0`              |
+| `0010`   | `NE`     | Not equal                      | `Z == 1`              |
+| `0011`   | `LO`     | Unsigned less than             | `C == 0`              |
+| `0100`   | `HS`     | Unsigned greater than or equal | `C == 1`              |
+| `0101`   | `LT`     | Signed less than               | `N != V`              |
+| `0110`   | `GE`     | Signed greater than or equal   | `N == V`              |
+| `0111`   | `HI`     | Unsigned greater than          | `C == 1 && Z == 0`    |
+| `1000`   | `LS`     | Unsigned less than or equal    | `!(C == 1 && Z == 0)` |
+| `1001`   | `GT`     | Signed greater than            | `Z == 0 && N == V`    |
+| `1010`   | `LE`     | Signed less than or equal      | `!(Z == 0 && N == V)` |
+| `1011`   | `VC`     | No overflow                    | `V == 0`              |
+| `1100`   | `VS`     | Overflow                       | `V == 1`              |
+| `1101`   | `PL`     | Positive or zero               | `N == 0`              |
+| `1110`   | `NG`     | Negative                       | `N == 1`              |
+| `1111`   |          | *Reserved*                     |                       |
 
-## Instructions documentation by types:
+## Instruction Documentation
 
 ### Load/Store
 
@@ -226,6 +243,18 @@ Bind a IO-specific register to a specific IO device memory.
 IO device at address `imm` will be write-protected.
 See _Binding & Locking_ section for more details.
 
+
+#### UNBIND
+
+##### Assembler syntax
+
+`UNBIND IX`
+
+##### Description
+
+Unbind a IO-specific register which was used for be write-protecting IO device memory.
+See _Binding & Locking_ section for more details.
+
 ### Control
 
 #### B.CC
@@ -266,13 +295,13 @@ The condition `CC` represents one of the condition codes defined in _Condition E
 PC = RM;
 ```
 
-### Integer
+### Arithmetic (Fixed Point, Integer)
 
 #### ADD
 
 ##### Assembler syntax
 
-`ADD    RX, RM, RN`
+`[FX_]ADD    RX, RM, RN`
 
 ##### Description
 
@@ -289,7 +318,7 @@ RX = RM + RN;
 
 ##### Assembler syntax
 
-`ADDI   RX, RM, #imm`
+`[FX_]ADDI   RX, RM, #imm`
 
 ##### Description
 
@@ -306,7 +335,7 @@ RX = RM + imm;
 
 ##### Assembler syntax
 
-`SUB    RX, RM, RN`
+`[FX_]SUB    RX, RM, RN`
 
 ##### Description
 
@@ -323,7 +352,7 @@ RX = RM - RN;
 
 ##### Assembler syntax
 
-`SUBI   RX, RM, #imm`
+`[FX_]SUBI   RX, RM, #imm`
 
 ##### Description
 
@@ -340,7 +369,7 @@ RX = RM - imm;
 
 ##### Assembler syntax
 
-`MUL    RX, RM, RN`
+`[FX_]MUL    RX, RM, RN`
 
 ##### Description
 
@@ -357,7 +386,7 @@ RX = RM * RN;
 
 ##### Assembler syntax
 
-`MULI   RX, RM, #imm`
+`[FX_]MULI   RX, RM, #imm`
 
 ##### Description
 
@@ -374,7 +403,7 @@ RX = RM * imm;
 
 ##### Assembler syntax
 
-`DIV    RX, RM, RN`
+`[FX_]DIV    RX, RM, RN`
 
 ##### Description
 
@@ -391,7 +420,7 @@ RX = RM / RN;
 
 ##### Assembler syntax
 
-`DIVI   RX, RM, #imm`
+`[FX_]DIVI   RX, RM, #imm`
 
 ##### Description
 
@@ -408,7 +437,7 @@ RX = RM / imm;
 
 ##### Assembler syntax
 
-`MADD   RX, RM, RN`
+`[FX_]MADD   RX, RM, RN`
 
 ##### Description
 
@@ -650,14 +679,16 @@ other than increasing PC.
 
 ## Management Plan
 
-The simulator for Garand is written in C++, using C++20 standard.
-All the team members use VS Code to develop the project.
-Dear ImGui library is used to provide Graphical User Interface (GUI) for the simulator.
-The source code and this document are version-controlled and hosted on Github.
-Issues and To-do lists are also maintained on Github.
-
-Our main communication line is Discord. Thrice a week, we will meet in CICS Makerspace to review project progress and discuss next week plan.
-
-Generally, we aim to share project works equally between members of the team.
-At the simulator building stage,...
-At the benchmark stage,...
+- The simulator for Garand is written in C++, using the C++20 standard.
+- The Dear ImGui library is used to provide a Graphical User Interface (GUI) for the simulator.
+- All the team members will use Microsoft Visual Studio Code as an IDE to develop the project.
+- The source code and this document are version-controlled and hosted on Github.
+- Issues and to-do lists are also maintained on Github.
+- Our main communication line is Discord. Thrice a week, we will meet in CICS Makerspace to review project progress and discuss next week plan.
+- Generally, we aim to share project works equally between members of the team. We plan to divide works as below:
+    - ISA definition in C++: Ibrahima Keita
+    - Processor implementation: Dung Nguyen, Ibrahima Keita
+    - Memory/cache implementation: Sergio Ly, Dung Nguyen
+    - Simulator UI: Ibrahima Keita, Sergio Ly
+    - Writing Benchmark: Dung Nguyen
+    - Benchmarking: Sergio Ly
