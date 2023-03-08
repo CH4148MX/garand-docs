@@ -1,0 +1,8 @@
+(
+    {reg: [
+        {"bits": 1, "name": "N"},
+        {"bits": 1, "name": "C"},
+        {"bits": 1, "name": "Z"},
+        {"bits": 1, "name": "V"},
+    ]}
+)

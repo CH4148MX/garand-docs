@@ -7,7 +7,7 @@ output: pdf_document
 
 <!-- # Garand Architecture -->
 
-## Descriptions
+## Description
 The Garand Architecture is a special-purpose architecture designed with gaming and graphics processing in mind.
 
 <!-- Named Garand Architecture. As a Special Purpose architecture derived from RISC/ARM, its primary support is gaming and graphics processing. It contains low-level graphics support, compatible with openGL. Multiple co-processing is also possible. Vectorization such as Fused Multiplacation-Add is included. On Developer side, extensible interface is documented as Add-On. -->
@@ -15,28 +15,33 @@ The Garand Architecture is a special-purpose architecture designed with gaming a
 ## Specifications
 
 ### Word Size
-Our word size is 32 bits, which makes a half word 16 bits, a double word .com/64 bits, and so on.
+Our word size is 32 bits, which makes a half word 16 bits, a double word 64 bits, and so on.
+
+### Memory Paging
+We will implement a multi-level page table that allows us to have a proper virtual memory system, so we can run subprocesses in peace. The structure of our page table will be detailed below.
+
+### Memory Caching
+We will use a n-way set associative cache. This will help us reduce the potential for conflicts when searching for data in a cache. 
+
+The implementation of our table is as follows:
+
 
 ### Data Types
 In terms of data types, we aim to support two distinct numerical types: integer and fixed point.
 
 #### Integer
-
-The ISA defines two types of integer:
--   Unsigned integer: Value ranges from 0 to the largest positive number can be binary encoded.
-    For example, 32 bits unsigned integer ranges from 0 to 4294967295 ($2^{32}-1$).
--   Signed integer: The ISA assume two's compliment representation for signed integer.
-    For example, 32 bits signed integer ranges from -2147483648($-2^{31}$) to 2147483647 ($2^{31}-1$).
-    Most arithmetic instructions supports signed integer.
+Our architecture defines two types of integers:
+- A 32 bit unsigned integer, with the range [0, $2^{32}-1$].
+- A 32 bit signed integer. To simulate the negative range of numbers, our instruction set architecture will use two's complement to store distinct numbers. Therefore, our range is [($-2^{31}$), ($2^{31}-1$)], or [-2147483648, 2147483647]. All operations which operate on unsigned numbers will support operations on the signed equivalents, but sign extension will be performed to maintain proper two's complement support.
 
 #### Fixed Point 
 In graphics, precision in calculations is fundamental; from raytracing, to interpolation, etc. As such, it is fundamental that, for a graphics-based architecture, we have some sort of mechanism for precise calculations. Therefore, we will be implementing fixed point precision.
 
-For our implementation of fixed point, we will reserve the lower 23 bits of a word to store our _mantissa_, which is the number that comes after the decimal point. Our _exponent_, which is 8 bits, will immediately follow the mantissa in bit order, taking bits 23 through 30 inclusive. Finally, the most significant bit (which is bit 31) will act as a signage bit, allowing us to have positive and negative fixed-point values.
+For our implementation of fixed point, we will reserve the lower 23 bits of a word to store our __fractional__, which is the number that comes after the decimal point. Our _exponent_, which is 8 bits, will immediately follow the mantissa in bit order, taking bits 23 through 30 inclusive. Finally, the most significant bit (which is bit 31) will act as a signage bit, allowing us to have positive and negative fixed-point values.
 
 A detailed diagram of this can be seen below.
 
-![Fixed Point Spec](https://media.discordapp.net/attachments/1079631715049426946/1082761338864029777/Untitled_Note_-_Mar_7_2023_3.26_PM.png)
+![Fixed Point Spec](diag/fx.png)
 
 As these numbers require special treatment, we will implement instructions specifically for them.
 
@@ -45,20 +50,27 @@ Our architecture is designed to support 36 total registers. The breakdown is as 
 - 16 General-Purpose Registers (frontend syntax `R##`).
 - 16 IO-specific registers (frontend syntax: `I##`)
 - 4 special purpose registers:
-    - Condition Flag (frontend syntax: `CND`) - <description here>.
+    - Condition Flag (frontend syntax: `CND`) - Used to store and procure the results of carry, overflow, or other conditional operations.
     - Program Counter (frontend syntax: `PC`) - Points to the currently executed instruction.
     - Link Register (frontend syntax: `LR`) - Commonly stores an address to a function (used in the caller-callee specification).
-    - Stack Pointer (frontend syntax: `SP`) - <description here>.
+    - Stack Pointer (frontend syntax: `SP`) - Points to a currently used space on the stack.
 
 Each of these registers uses a single word (32 bits) as its underlying data type.
 
 #### Encoding
 
-| Name  | Size | Encoding | Description                    |
+| Name  | Size (bits) | Encoding  | Description                    |
 | ----- | ---- | -------- | ------------------------------ |
 | `R##` | 32   | 0-15     | General-Purpose Registers 0-15 |
 | `I##` | 32   | 0-15     | IO-specific Registers 0-15     |
 | `SP`  | 32   | 16       | Stack Pointer                  |
+
+#### Binding & Locking
+As we are writing a multi-core architecture, we are very likely to run into race conditions when writing to/reading from registers. 
+
+As such, at the hardware level, we will implement an atomic locking mechanism that activates when a core writes to a register. The way this works is simple: the first core that writes to a register will have its operations carried out, while the other cores will have to wait until the lock is released. We will keep track of this using a table protected by atomic locks.
+
+Furthermore, we are also going to introduce the concept of register binding for IO registers. The motivation behind this is to create a hassle-free experience for a developer that is interfacing with hardware devices. This will be provided in the form of the `BIND` instruction, which will take an IO-specific register, store the memory address of an IO device (which would likely be mapped to an index) in one of the IO registers, and protects the value in the IO-register from being overwritten. That way, we do not need to do static memory writes to registers.
 
 ### Fetching Model
 As described earlier, our word size is 32 bits. To fully take advantage of this, we will use the `multiple words per instruction` fetch model. This will give us optimal code size while performing relatively efficiently.
@@ -71,24 +83,65 @@ We want to keep our instruction and data memory together; as such, we will use t
 - Register, Immediate, PC + Immediate Offset (PC Relative): for the rest of the instructions.
 
 ### Instructions
-<Description here>.
 
 #### Encoding
+When choosing the encoding for this architecture, we wanted to go for an approach that yields uniform instruction sizes, while being able to perform as many operations as possible. Therefore, all instructions will follow the base encoding shown below.
+
+![Instruction Encoding](diag/ins_encoding.png)
+
 
 #### Operation Codes
-| Flag | OpCode/Type | Register/Immediate reference |
-| ---- | ----------- | ---------------------------- |
+A list of the operation codes can be found here.
+| Index | Operation | Encoding |
+|-------|-----------|----------|
+| 00000 | MREAD     |          |
+| 00001 | MWRITE    |          |
+| 00010 | BIND      |          |
+| 00011 |           |          |
+| 00100 | BRUH      |          |
+| 00101 | BRUHA     |          |
+| 00110 | ADD       |          |
+| 00111 | ADDI      |          |
+| 01000 | SUB       |          |
+| 01001 | SUBI      |          |
+| 01010 | MUL       |          |
+| 01011 | MULI      |          |
+| 01100 | DIV       |          |
+| 01101 | DIVI      |          |
+| 01110 | AND       |          |
+| 01111 | NAND      |          |
+| 10000 | OR        |          |
+| 10001 | XOR       |          |
+| 10010 | LSL       |          |
+| 10011 | LSR       |          |
+| 10100 | NOT       |          |
+| 10101 | RSR       |          |
+| 10110 |           |          |
+| 10111 |           |          |
+| 11000 |           |          |
+| 11001 |           |          |
+| 11010 |           |          |
+| 11011 |           |          |
+| 11100 |           |          |
+| 11101 |           |          |
+| 11110 |           |          |
+| 11111 |           |          |
 
 
 #### Condition encoding
 
 ##### Condition flags
-
-Garand uses 4 condition flags, based on ARM. All 4 are stored in Condition Flag register. The details of each flag are:
+Our architecture supports condition flags, based on the specifications from ARM. All four condition flags are stored in the lower four bits of the condition flag register, and (optionally) in the condition field of our instruction encoding. The details of each flag are:
 - `N`: Negative condition flag. Set if the result of the most recent flag-setting instruction is negative.
 - `C`: Carry condition flag. Set if the result of the most recent flag-setting instruction has carry.
 - `Z`: Zero condition flag. Set if the result of the most recent flag-setting instruction is zero.
 - `V`: Overflow condition flag. Set if the result of the most recent flag-setting instruction has overflow.
+
+The layout for each of these flags in our condition fields is as follows:
+
+![Condition Encoding](diag/cond_enc.png)
+
+However, as you will see in the next section, we will be combining these flags to implement condition codes.
 
 ##### Condtion codes
 

@@ -1,0 +1,7 @@
+(
+    {reg: [
+        {"bits": 24, "name": "Args"},
+        {"bits": 4, "name": "Operation"},
+        {"bits": 4, "name": "Condition"},
+    ]}
+)

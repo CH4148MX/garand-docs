@@ -1,0 +1,7 @@
+(
+    {reg: [
+        {"bits": 23, "name": "Fractional"},
+        {"bits": 8, "name": "Exponent"},
+        {"bits": 1, "name": "S"},
+    ]}
+)
