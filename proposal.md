@@ -23,7 +23,6 @@ In terms of data types, we aim to support two distinct numerical types: integer 
 The ISA defines two types of integer:
 -   Unsigned integer: Value ranges from 0 to the largest positive number can be binary encoded.
     For example, 32 bits unsigned integer ranges from 0 to 4294967295 ($2^{32}-1$).
-    Bitwise instructions always treat value as unsigned.
 -   Signed integer: The ISA assume two's compliment representation for signed integer.
     For example, 32 bits signed integer ranges from -2147483648($-2^{31}$) to 2147483647 ($2^{31}-1$).
     Most arithmetic instructions supports signed integer.
@@ -97,7 +96,9 @@ register N.
 
 ##### Psuedo C-code
 
-`RX = RM[RN << 2]`
+```c
+RX = RM[RN << 2];
+```
 
 #### MRITE
 
@@ -112,7 +113,9 @@ register N.
 
 ##### Psuedo C-code
 
-`RM[RN << 2] = RX`
+```c
+RM[RN << 2] = RX;
+```
 
 #### BIND
 
@@ -148,60 +151,315 @@ Support both relative/absolute jump. subroutine: relative. Function call: absolu
 
 ### Integer
 
-Each instructions has **(I)mmediate** variation, which allow immediate to be written
-in-place of register T.
-
 #### ADD
 
-Add two registers S and T. Store in register X. Overflow is checked.
+##### Assembler syntax
+
+`ADD    RX, RM, RN`
+
+##### Description
+
+Calculate the two's complement 32-bit sum of two registers M and N.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM + RN;
+```
+
+#### ADDI
+
+##### Assembler syntax
+
+`ADDI   RX, RM, #imm`
+
+##### Description
+
+Calculate the two's complement 32-bit sum of register M and immediate.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM + imm;
+```
+
+#### SUB
+
+##### Assembler syntax
+
+`SUB    RX, RM, RN`
+
+##### Description
+
+Calculate the two's complement 32-bit difference of two registers M and N.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM - RN;
+```
+
+#### SUBI
+
+##### Assembler syntax
+
+`SUBI   RX, RM, #imm`
+
+##### Description
+
+Calculate the two's complement 32-bit difference of register M and immediate.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM - imm;
+```
 
 #### MUL
 
-Mutiply two registers S and T. Store in register X.
+##### Assembler syntax
+
+`MUL    RX, RM, RN`
+
+##### Description
+
+Calculate the two's complement 32-bit product of registers M and N.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM * RN;
+```
+
+#### MULI
+
+##### Assembler syntax
+
+`MULI   RX, RM, #imm`
+
+##### Description
+
+Calculate the two's complement 32-bit product of register M and immediate.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM * imm;
+```
 
 #### DIV
 
-Divide two registers S and T. Store in register X.
+##### Assembler syntax
+
+`DIV    RX, RM, RN`
+
+##### Description
+
+Calculate the two's complement 32-bit quotient of registers M and N.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM / RN;
+```
+
+#### DIVI
+
+##### Assembler syntax
+
+`DIVI   RX, RM, imm`
+
+##### Description
+
+Calculate the two's complement 32-bit quotient of register M and immediate.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM / imm;
+```
+
+#### MADD
+
+##### Assembler syntax
+
+`MADD   RX, RM, RN`
+
+##### Description
+
+Calculate the two's complement 32-bit product of registers M and N.
+Add the product with register X, then store the sum in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RX * (RM + RN);
+```
 
 #### AND
 
-Bitwise And two registers S and T. Store in register X.
+##### Assembler syntax
+
+`AND    RX, RM, RN`
+
+##### Description
+
+Calculate the bitwise AND of registers M and N.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM & RN;
+```
 
 #### NAND
 
-Bitwise Nand two registers S and T. Store in register X.
+##### Assembler syntax
+
+`NAND   RX, RM, RN`
+
+##### Description
+
+Calculate the bitwise NAND of registers M and N.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = NAND(RM, RN);
+```
 
 #### OR
 
-Bitwise Or two registers S and T. Store in register X.
+##### Assembler syntax
+
+`OR     RX, RM, RN`
+
+##### Description
+
+Calculate the bitwise OR of registers M and N.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM | RN;
+```
 
 #### XOR
 
-Bitwise Xor two registers S and T. Store in register X.
+##### Assembler syntax
+
+`XOR    RX, RM, RN`
+
+##### Description
+
+Calculate the bitwise XOR of registers M and N.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM ^ RN;
+```
 
 #### NOT
 
-Bitwise Not register S. Store in register X.
+##### Assembler syntax
+
+`NOT    RX, RM`
+
+##### Description
+
+Calculate the bitwise NOT of registers M.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = ~RM;
+```
 
 #### ASR
 
-Arithmetic shift right Register S by Register T amount, stores in Register X.
+##### Assembler syntax
+
+`ASR    RX, RM, RN`
+
+##### Description
+
+Arithmetically shift value of Register M right by a variable number of bits.
+The amount of shift is from Register N value.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM >> RN;
+```
 
 #### LSR
 
-Logical shift right Register S by Register T amount, stores in Register X.
+##### Assembler syntax
+
+`LSR    RX, RM, RN`
+
+##### Description
+
+Logically shift value of Register M right by a variable number of bits.
+The amount of shift is from Register N value.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM >> RN;
+```
 
 #### LSL
 
-Logical shift left Register S by Register T amount, stores in Register X.
+##### Assembler syntax
+
+`LSL    RX, RM, RN`
+
+##### Description
+
+Logically shift value of Register M left by a variable number of bits.
+The amount of shift is from Register N value.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = RM >> RN;
+```
 
 #### RSR
 
-Rotational shift right Register S by Register T amount, stores in Register X.
+##### Assembler syntax
 
-#### RSL
+`RSR    RX, RM, RN`
 
-Rotational shift left Register S by Register T amount, stores in Register X.
+##### Description
+
+Rotationally shift value of Register M right by a variable number of bits.
+The amount of shift is from Register N value.
+Store the result in register X.
+
+##### Psuedo C-code
+
+```c
+RX = (RM << (sizeof(RM) - RN)) | (RM >> RN);
+```
 
 ### Fixed-point number
 
@@ -211,8 +469,20 @@ Use the same mnemonics as general purpose registers'. It is undefined behaviour 
 
 #### BREAK
 
+##### Assembler syntax
+
+`BREAK`
+
+##### Description
+
 Break execution. In the simulator, the processor must pause processing after this point.
 
 #### HALT
+
+##### Assembler syntax
+
+`HALT`
+
+##### Description
 
 Stop all execution. In the simulator, the processor must stop processing at this point and exit the program.
