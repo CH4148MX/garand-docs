@@ -650,7 +650,7 @@ Store the result in register X.
 ##### Psuedo C-code
 
 ```c
-RX = RM >> RN;
+RX = RM << RN;
 ```
 
 #### RSR
@@ -668,7 +668,7 @@ Store the result in register X.
 ##### Psuedo C-code
 
 ```c
-RX = (RM << (sizeof(RM) - RN)) | (RM >> RN);
+RX = RSR(RM, RN);
 ```
 
 
