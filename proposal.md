@@ -23,12 +23,21 @@ We will implement a multi-level page table that allows us to have a proper virtu
 ### Memory Caching
 We will use a direct mapped cache. This will keep our cache implementation simple, although with decreased performance. Our cache will also use the Modified Shared Invalid (MSI) protocol to ensure cache coherency in our multi-core architecture.
 
-The implementation of our table is as follows:
+Each entry in our cache will have a 16 bit offset, 8 bit index, 7 bit tag, and 1 dirtybit. The implementation of our table is as follows:
+```c++
+struct CacheEntry {
+    offset: 16;
+    index: 8;
+    tag: 7
+    dirty: 1
+};
 
-| Tag  | Index | Dirty | Offset |
-| ---- | ----- | ----- | ------ |
-| 0    | 00000   | 0-1  | 00000 |
-| 10100 | 1000000 | 0-1 | 1000000 |
+struct CacheTable {
+    CacheEntry entries[32];
+};
+```
+
+![Cache Table](diag/cache.png)
 
 ### Data Types
 In terms of data types, we aim to support two distinct numerical types: integer and fixed point.
