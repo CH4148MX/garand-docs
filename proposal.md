@@ -478,7 +478,7 @@ Fixed-point version with `FX_` prefix will do similar calculation, but compute o
 ##### Psuedo C-code
 
 ```c
-RX = RX * (RM + RN);
+RX = RX + (RM * RN);
 ```
 
 #### CMP
