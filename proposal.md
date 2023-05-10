@@ -732,3 +732,9 @@ Break execution. In the simulator, the processor must pause processing after thi
     - Simulator UI: Ibrahima Keita, Sergio Ly
     - Writing Benchmark: Dung Nguyen
     - Benchmarking: Sergio Ly
+
+## Reflection
+There were many challenges we faced throughout this project. The most difficult aspect was the fact that we had no prior experience designing an ISA. There were many design choices we made at the beginning that had to be changed or were incomplete due to unforseen issues. A notable example of this is with our isntructions and their encoding. We initially had a single instruction encoding format, but quickly realized that it wasn't sufficient, and thus now have 6 different formats for different instructions. The next challenge we faced was maintaining a large codebase, much of which was duplicated. This was primarily in our instruction implementation, as the instructions were similar yet differed in how to retrieve and handle the data. Our initial implementation had a lot of repeated code, which became unmaintainable. We later changed to having more versatile functions to remove the code duplication. A third major challenge was working with C++ and compiling the project. We used CMake with several dependencies, which was troublesome to get working across all our group members. The compiler would produce several errors, most of which were unhelpful and took weeks to figure out.
+
+Additionally to project specific issues, we noticed the GUI was slowing down the execution of the program significantly. When running our larger benchmarks, we had to find a way to make them fast. Thus, we implemented a frame skipping feature, which would only update the GUI every $n$ clock cycles.
+
