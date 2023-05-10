@@ -732,6 +732,14 @@ Break execution. In the simulator, the processor must pause processing after thi
     - Simulator UI: Ibrahima Keita, Sergio Ly
     - Writing Benchmark: Dung Nguyen
     - Benchmarking: Sergio Ly
+- Eventually, the actual work division is:
+  - ISA definition: Ibrahima Keita, Dung Nguyen,  Sergio Ly
+  - Processor implementation: Dung Nguyen, Sergio Ly
+  - Graphic extension: Ibrahima Keita
+  - Memory/cache implementation: Ibrahima Keita, Dung Nguyen
+  - Simulator UI: Dung Nguyen
+  - Writing Benchmark: Sergio Ly
+  - Benchmarking: Sergio Ly
 
 ## Benchmarks
 We used the two required benchmarks (exchange sort & matrix multiply) to see how our simulator performed based on cache size. We set our cache hit to take 0x5 cycles and miss to take 0x30 cycles.
