@@ -105,47 +105,60 @@ specified offset immediate. This is the recommended method for subroutine branch
 ### Instructions
 
 #### Encoding
-All instructions are encoded with a uniform word-size, and follow the base encoding shown below.
+All instructions are encoded with a uniform word-size, and follow one of the following base encoding.
+#### General Encoding
 ![Instruction Encoding](diag/ins_encoding.png)
+#### 3 Register Encoding (3R)
+![3 Register Instruction Encoding](diag/ins_enc_reg3.png)
+#### 2 Register Encoding (3R)
+![2 Register Instruction Encoding](diag/ins_enc_reg2.png)
+#### 2 Register 1 Immediate Encoding (2R1I)
+![2 Register 1 Immediate Encoding](diag/ins_enc_reg2_imm1.png)
+#### 1 Register 1 Immediate Encoding (1R1I)
+![2 Register 1 Immediate Encoding](diag/ins_enc_reg1_imm1.png)
+#### 1 Register Encoding (1R)
+![1 Register Encoding](diag/ins_enc_reg1.png)
+#### 1 Immediate Encoding (1I)
+![1 Immediate Encoding](diag/ins_enc_imm1.png)
 
 #### Operation Codes
 A list of the operation codes can be found here. The table is subject to change as instructions are added or removed.
 
-| Opcode   | Variant/Condition | Operation |
-| -------- | ----------------- | --------- |
-| `000000` | `0000`            | MREAD     |
-| `000000` | `0001`            | MWRITE    |
-| `000000` | -                 | -         |
-| `000000` | -                 | -         |
-| `000010` | *User-Supplied*   | BRUH.CC   |
-| `000011` | *User-Supplied*   | B.CC      |
-| `000100` | `0000`            | ADD       |
-| `000100` | `0001`            | ADDI      |
-| `000101` | `0000`            | SUB       |
-| `000101` | `0001`            | SUBI      |
-| `000101` | `0010`            | CMP       |
-| `000101` | `0011`            | CMPI      |
-| `000110` | `0000`            | MUL       |
-| `000110` | `0001`            | MULI      |
-| `000110` | `0100`            | MADD      |
-| `000111` | `0000`            | DIV       |
-| `000111` | `0001`            | DIVI      |
-| `001000` | `0000`            | AND       |
-| `001000` | `0001`            | ANDI      |
-| `001000` | `0010`            | TEST      |
-| `001001` | `0000`            | NAND      |
-| `001001` | `0001`            | NANDI     |
-| `001010` | `0000`            | OR        |
-| `001010` | `0001`            | ORI       |
-| `001011` | `0000`            | XOR       |
-| `001011` | `0001`            | XORI      |
-| `001100` | `0000`            | LSL       |
-| `001100` | `0001`            | LSLI      |
-| `001100` | `0010`            | LSR       |
-| `001100` | `0011`            | LSRI      |
-| `001100` | `0100`            | RSR       |
-| `001100` | `0101`            | RSRI      |
-| `001111` | `0000`            | NOT       |
+| Opcode   | Variant/Condition | Operation | Encoding |
+| -------- | ----------------- | --------- | -------- |
+| `000000` | `0000`            | MREAD     | 3R |
+| `000000` | `0001`            | MWRITE    | 3R |
+| `000000` | -                 | -         | |
+| `000000` | -                 | -         | |
+| `000010` | *User-Supplied*   | BRUH.CC   | 1R |
+| `000011` | *User-Supplied*   | B.CC      | 1I |
+| `000100` | `0000`            | ADD       | 3R |
+| `000100` | `0001`            | ADDI      | 2R1I |
+| `000101` | `0000`            | SUB       | 3R |
+| `000101` | `0001`            | SUBI      | 2R1I |
+| `000101` | `0010`            | CMP       | 2R |
+| `000101` | `0011`            | CMPI      | 1R1I |
+| `000110` | `0000`            | MUL       | 3R |
+| `000110` | `0001`            | MULI      | 2R1I |
+| `000110` | `0100`            | MADD      | 3R |
+| `000111` | `0000`            | DIV       | 3R |
+| `000111` | `0001`            | DIVI      | 2R1I |
+| `001000` | `0000`            | AND       | 2R |
+| `001000` | `0001`            | ANDI      | 1R1I |
+| `001000` | `0010`            | TEST      | 2R |
+| `001001` | `0000`            | NAND      | 2R |
+| `001001` | `0001`            | NANDI     | 1R1I |
+| `001010` | `0000`            | OR        | 2R |
+| `001010` | `0001`            | ORI       | 1R1I |
+| `001011` | `0000`            | XOR       | 2R |
+| `001011` | `0001`            | XORI      | 1R1I |
+| `001100` | `0000`            | LSL       | 3R |
+| `001100` | `0001`            | LSLI      | 2R1I |
+| `001100` | `0010`            | LSR       | 3R |
+| `001100` | `0011`            | LSRI      | 2R1I |
+| `001100` | `0100`            | RSR       | 3R |
+| `001100` | `0101`            | RSRI      | 2R1I |
+| `001111` | `0000`            | NOT       | |
 
 
 #### Variants & Conditions
@@ -566,6 +579,24 @@ Store the result in register X.
 RX = RM >> RN;
 ```
 
+#### ASRI
+
+##### Assembler Syntax
+
+`ASR    RX, RM, #imm`
+
+##### Description
+
+Arithmetically shift value of Register M right by a variable number of bits.
+The amount of shift is from an immediate value.
+Store the result in register X.
+
+##### C Psuedocode
+
+```c
+RX = RM >> imm;
+```
+
 #### LSR
 
 ##### Assembler Syntax
@@ -582,6 +613,24 @@ Store the result in register X.
 
 ```c
 RX = RM >> RN;
+```
+
+#### LSRI
+
+##### Assembler Syntax
+
+`LSR    RX, RM, #imm`
+
+##### Description
+
+Logically shift value of Register M right by a variable number of bits.
+The amount of shift is from an immediate value.
+Store the result in register X.
+
+##### C Psuedocode
+
+```c
+RX = RM >> imm;
 ```
 
 #### LSL
@@ -602,6 +651,24 @@ Store the result in register X.
 RX = RM << RN;
 ```
 
+#### LSLI
+
+##### Assembler Syntax
+
+`LSL    RX, RM, #imm`
+
+##### Description
+
+Logically shift value of Register M left by a variable number of bits.
+The amount of shift is from an immediate value.
+Store the result in register X.
+
+##### C Psuedocode
+
+```C
+RX = RM << imm;
+```
+
 #### RSR
 
 ##### Assembler Syntax
@@ -620,6 +687,24 @@ Store the result in register X.
 RX = RSR(RM, RN);
 ```
 
+#### RSRI
+
+##### Assembler Syntax
+
+`RSR    RX, RM, #imm`
+
+##### Description
+
+Rotationally shift value of Register M right by a variable number of bits.
+The amount of shift is from an immediate value.
+Store the result in register X.
+
+##### C Psuedocode
+
+```c
+RX = RSR(RM, imm);
+```
+
 ### Special
 
 #### CALL
@@ -631,27 +716,6 @@ RX = RSR(RM, RN);
 ##### Description
 
 Break execution. In the simulator, the processor must pause processing after this point.
-
-#### HALT
-
-##### Assembler Syntax
-
-`HALT`
-
-##### Description
-
-Stop all execution. In the simulator, the processor must stop processing at this point and exit the program.
-
-#### NOP
-
-##### Assembler Syntax
-
-`NOP`
-
-##### Description
-
-No-operation. The processor will not perform any operation on this instruction
-other than increasing PC.
 
 ## Management Plan
 

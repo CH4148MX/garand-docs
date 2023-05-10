@@ -1,0 +1,12 @@
+(
+  {reg: [
+    {"bits": 2, "name": "Fill"},
+    {"bits": 6, "name": "Reg 3"},
+    {"bits": 6, "name": "Reg 2"},
+    {"bits": 6, "name": "Reg 1"},
+    {"bits": 2, "name": "Imm"},
+    {"bits": 6, "name": "Operation"},
+    {"bits": 4, "name": "Condition"},
+  	]
+  }
+)
