@@ -737,25 +737,19 @@ Break execution. In the simulator, the processor must pause processing after thi
 We used the two required benchmarks (exchange sort & matrix multiply) to see how our simulator performed based on cache size. We set our cache hit to take 0x5 cycles and miss to take 0x30 cycles.
 
 ### Exchange Sort
-We benchmarked the exchange sort with a 100 item array and a 1000 item array. Both arrays were randomly generated.
-
-#### 100 Item Array
-Running the 100 item array against the exchange sort required 306,306 cycles to execute when a large cache was used. And as expected, the small cache run took 1,430,143 cycles to execute.
-![Exchange Sort 100 Items Big Cache](benchmark_img/exchange_sort_100_big_cache_end.png)
-![Exchange Sort 100 Items Small Cache](benchmark_img/exchange_sort_100_small_cache_end.png)
-
-#### 1000 Item Array
-Running the larger array took 28,232,226 cycles to execute with a large cache. In comparison, a small cache took 132,386,543 cycles to execute.
-![Exchange Sort 1000 Items Big Cache](benchmark_img/exchange_sort_1000_big_cache_end.png)
-![Exchange Sort 1000 Items Small Cache](benchmark_img/exchange_sort_1000_small_cache_end.png)
+We benchmarked the exchange sort with a 100 item array. The array was randomly generated. Below is a table of our results. Most notably, having a cache is the most important part of our ISA. Our results show that not having is cache causes a significant slowdown in performance, since there are several more pipeline stalls due to fetching from main memory.
+|        | Pipeline & Cache | Cache   | Pipeline  | None      |
+| ------ | ---------------- | ------- | --------- | --------- |
+| cycles | 308,412          | 515,674 | 2,768,141 | 3,598,903 |
 
 ### Matrix multiply
-We benchmarked the matrix multiply by multiplying 2 4x4 matrices. Similarly to the exchange sort, we ran the benchmark with a large and small cache. When running with a large cache, the simulator took 5,988 cycles to execute. Contrarily, a small cache, 21,651 cycles run.
-![Matrix Multiply Big Cache](benchmark_img/matrix_multiply_big_cache.png)
-![Matrix Multiply Small Cache](benchmark_img/matrix_multiply_small_cache.png)
+We benchmarked the matrix multiply by multiplying 2 4x4 matrices. Similar to our previous benchmark, the cache is what caused the largest performance reason, though, the pipeline being disabled also made a difference in performance.
+|        | Pipeline & Cache | Cache   | Pipeline  | None      |
+| ------ | ---------------- | ------- | --------- | --------- |
+| cycles | 5,858            | 9,450   | 53,417    | 63,071    |
 
 ### Results
-Evidently, the cache size has a significant impact on the amount of cycles it takes to run these programs. These benchmarks demonstrate the need for a large cache in order to run large applications effeciently.
+Evidently, the cache is the largest contributor to performance. This make sense as reading from memory is very slow and takes several clock cycles (0x30 in our benchmarks). This simulator shows the need for a cache, one that is ideally large. Additionally, having a pipeline is also important. Although the pipeline doesn't make as much of a difference as the cache, as the program increases in size, the effects of not having a cache become more evident.
 
 ## Reflection
 There were many challenges we faced throughout this project. The most difficult aspect was the fact that we had no prior experience designing an ISA. There were many design choices we made at the beginning that had to be changed or were incomplete due to unforseen issues. A notable example of this is with our isntructions and their encoding. We initially had a single instruction encoding format, but quickly realized that it wasn't sufficient, and thus now have 6 different formats for different instructions. The next challenge we faced was maintaining a large codebase, much of which was duplicated. This was primarily in our instruction implementation, as the instructions were similar yet differed in how to retrieve and handle the data. Our initial implementation had a lot of repeated code, which became unmaintainable. We later changed to having more versatile functions to remove the code duplication. A third major challenge was working with C++ and compiling the project. We used CMake with several dependencies, which was troublesome to get working across all our group members. The compiler would produce several errors, most of which were unhelpful and took weeks to figure out.
