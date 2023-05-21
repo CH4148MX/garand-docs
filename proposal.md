@@ -772,3 +772,209 @@ A third major challenge was working with C++ and compiling the project. We used 
 Additionally to project specific issues, because we call CPU cycle every time
 GUI renders, it can slow down the execution of the program significantly. When running our larger benchmarks, we had to find a way to make them fast. Thus, we implemented a frame skipping feature, which would only update the GUI every $n$ clock cycles.
 
+## Manual
+
+The instructions below contain details of building and running the software.
+Should there be any questions, create a new issue at
+https://github.com/Tensor497/garand-docs.
+
+### Overview
+
+The `garand` project is divided into three repositories:
+-   garand: ([github.com/Tensor497/garand](https://github.com/Tensor497/garand)).
+    This is the repository for the simulator and disassembler written in C++20.
+-   garand-as: ([github.com/Tensor497/garand-as](https://github.com/Tensor497/garand-as)).
+    This is the repository for the assembler written in Python 3.11.
+-   garand-docs: ([github.com/Tensor497/garand-docs](https://github.com/Tensor497/garand-docs)).
+    This is the repository for the documentation. You can find the latest version
+    of this documentation here.
+
+It is necessary to clone all the aforementioned repo using `git`.
+You may also download ZIP file containing the source code.
+
+### Prerequisites
+
+The following list contains all dependencies you will need to install before
+compiling and running this project. The version are extracted from dev machine,
+but does not imply the minimum runnable version.
+-   garand:
+    -   C++ compiler supporting C++20 standard.
+        MSVC 16.11, Clang 16, GCC 12 are known to work.
+    -   CMake 3.20+
+    -   [vcpkg](https://github.com/microsoft/vcpkg).
+        You are welcome to try other C++ package manager solutions.
+    -   C++ libraries:
+        -   fmt 9.1.0
+        -   imgui 1.89.3
+        -   SDL2 2.6.2
+        -   SDL2PP 0.16.1
+    -   [Optional] Ninja 1.11.1. This allows parallel build and exporting 
+        `compile_commands.json`.
+-   garand-as
+    -   Python 3.11+
+    -   Python libraries:
+        -   Pillow 9.4.0
+-   garand-docs
+    -   pandoc 2.19.2
+
+### Building
+
+#### garand
+
+```sh
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+```
+
+A new folder _build_ shall be created. After running commands successfully,
+an executable shall exist inside the folder.
+
+#### garand-as
+
+No compilation is needed to build this.
+
+#### garand-docs
+
+```sh
+pandoc -i proposal.md -o proposal.pdf
+```
+
+### Running
+
+#### garand
+
+Run the executable with no arguments. For example, on Windows, call `garand.exe`,
+on Linux, run `./garand`. Be sure to have an existing working window manager.
+
+#### garand-as
+
+```
+python garand-as.py <input.gar> <output.bin>
+```
+
+#### garand-docs
+
+Use your favorite PDF viewer to view the `proposal.pdf`
+
+### Using
+
+#### Assembling
+
+First, write Garand assembly and save it into the file. The recommended
+file extension is `.gar`, `.garand`. Above this documentation contains
+instructions, mnemonics, and their syntax.
+
+To comment, append to the beginning
+of the line (except for spaces) with `#`. To create a label, use `def`.
+For example, `def begin` will create label begin at the instruction right next
+to it (next instruction must be in new line).
+The following example is an infinite loop that keeps adding 1 to `R1`.
+
+```asm
+# Infinite loop
+def begin
+    ADDI    R1, R1, #1
+    B.AL    begin
+```
+
+To import another binary into the output, do `.incbin bin_name Address`,
+with `bin_name` be the name of importing binary and `Address` be the import
+location.
+For example, `.incbin sun.bmp 0x4000` will copy contents in sun.bmp byte-by-byte
+into the output at offset 0x4000.
+
+You can also find more example programs in _garand-as/examples/_.
+
+Then, assemble our program using _garand-as_. For example, if our program is
+_hello.gar_, run:
+
+```
+python garand-as.py hello.gar hello.bin
+```
+
+#### Running
+
+Open up _garand_. You should see a window named Control UI with a list of checkboxes.
+```
+[] Demo Window
+[] Memory Demo
+[] Instruction Demo
+[] Pipeline Demo
+[] Disassembler Demo
+[] Simulator
+```
+
+Click on _Simulator_ to show simulator window. 6 new windows will show up.
+
+First is _Simulator_ window. Here you can find:
+-   `Load Offset`: Input offset in memory to load data in. Expect hex value.
+-   `Executable`: Input box for path to the executable, which is the output of
+    assembler. There should be no quotes wrapping the path.
+-   `Load`: Clicking the button, it will read the executable pointed by the
+    specified path and write to the memory. An error text will show if loading
+    is failed.
+-   `PC: 0x...`: Displaying current program counter.
+-   `Speculating next: ...`: Displaying instruction next to program counter.
+-   `Clock: ... cycle(s)`: Display the total clocks that the CPUs have cycled.
+-   `{...}`: Display list of breakpoint address.
+-   `Set Breakpoint`: Clicking will add new breakpoint to the list
+-   `Remove Breakpoint`: Clicking will remove breakpoint from the list
+-   `Breakpoint`: Specify the address of breakpoint to set/remove
+-   `IsRunning`: Displaying running status of the CPU. 0 means no. 1 means yes.
+-   `Run`: Set `IsRunning` to 1 and let CPU cycles until a breakpoint is hit
+    or an error occurs.
+-   `Step`: Perform one CPU cycle.
+-   `Reset Register`: Set all register values to 0.
+-   `Reset Processor`: Reset CPU to initial state.
+
+Second window is `Feature`, here you can find
+-   `Turn on Skipping`: Enabling CPU skipping feature. Clicking on the checkbox
+    will display an integer input box where you can specify number of skipping
+    cycles when running. For example, 1000 means CPU will cycle 1000+1 cycles
+    before rendering UI.
+-   `Pipeline`: Enabling CPU pipeline. When checked, instruction will be added
+    to the CPU pipeline as soon as possible. Else, instruction will only be
+    added when the pipeline is empty.
+-   `Cache`: Enabling CPU cache. When checked, memory will be loaded via cache
+    instead and reduce needed cycle. Else, data will only be copied to and
+    from main memory.
+
+Third window is `Pipeline View`, displaying the state of each stage of the
+pipeline: `Fetch`, `Decode`, `Execute`, `Write-back`.
+At each stage, if not `(empty)`, there are 5 lines of information:
+-   `I`: Disassembly of instruction.
+    This is provided for reference of what instruction would be executed.
+-   `C`: Cycle. Number of cycles that CPU has spent on this instruction at
+    that stage.
+-   `M: [..., ..., ..., ...]`: Needed Cycle. Number of required cycle that CPU
+    need to spend on to complete the instruction at each stage.
+-   `P`: Processed. Inform whether the CPU pipeline stage has processed the
+    instruction.
+-   `D: [..., ...], | ...`: Decode info. Contains raw decoded arguments of the instruction.
+
+Forth and fifth are `Cache View` and `Memory View`. As the names suggest,
+they display current memory and cache used by the CPU.
+Both has `Options` button and `Range` input box. `Options` allows customizing
+the view, such as number of columns, ASCII, etc.  `Range` allows going to
+the address within the memory.
+Additionally, Cache has `Block` input to select which block to display,
+`Tag: ...` to display cache block tag, and `Valid ...` to display cache block
+validity.
+
+Sixth window is `Register Table`. This will display all value of all register
+in decimal, except for condition register `NZCV`, which is shown as 1 bit for
+each flag.
+
+To load program,
+input the path of previously assembled program into `Executable`.
+Click `Load` to load the binary. Now you should see in the updated `Memory View`
+window now contains the raw bytes of executable.
+
+Optionally, set breakpoint on the address of where you want to pause the execution.
+
+To run, click Run in `Simulator` window. You should be able to see instructions
+loaded into pipeline in `Pipeline View` window. If Cache is enabled,
+you will also see `Cache View` being updated with value from memory.
+If the program also write to  emory, you should be able to see `Memory View`
+updating in realtime. If your code use graphics, it would be rendered behind the
+windows.
