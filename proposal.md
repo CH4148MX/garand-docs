@@ -191,8 +191,8 @@ The instructions that use the condition codes are `BRUH.CC`, and `B.CC`. They wi
 | Encoding | Mnemonic | Meaning(Integer)               | Flag                  |
 | -------- | -------- | ------------------------------ | --------------------- |
 | `0000`   | `AL`     | Always                         | Any                   |
-| `0001`   | `EQ`     | Equal                          | `Z == 0`              |
-| `0010`   | `NE`     | Not equal                      | `Z == 1`              |
+| `0001`   | `EQ`     | Equal                          | `Z == 1`              |
+| `0010`   | `NE`     | Not equal                      | `Z == 0`              |
 | `0011`   | `LO`     | Unsigned less than             | `C == 0`              |
 | `0100`   | `HS`     | Unsigned greater than or equal | `C == 1`              |
 | `0101`   | `LT`     | Signed less than               | `N != V`              |
