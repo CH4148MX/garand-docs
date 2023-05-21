@@ -970,7 +970,8 @@ input the path of previously assembled program into `Executable`.
 Click `Load` to load the binary. Now you should see in the updated `Memory View`
 window now contains the raw bytes of executable.
 
-Optionally, set breakpoint on the address of where you want to pause the execution.
+Additionally, you may set breakpoint on the address of where you want to pause the execution. Since program is load into a larger memory space, you might need to
+set breakpoint at the end of program to avoid executing unwanted instruction.
 
 To run, click Run in `Simulator` window. You should be able to see instructions
 loaded into pipeline in `Pipeline View` window. If Cache is enabled,
