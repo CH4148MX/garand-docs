@@ -49,21 +49,6 @@ Our architecture defines two types of integers:
 
 All operations which operate on unsigned numbers will support operations on the signed equivalents, but sign extension will be performed on signed integers to maintain proper representation.
 
-### Recommended Implementations of Other Data Types
-#### Fixed Point 
-In various computation-heavy fields, such as computer graphics, precision in calculations is fundamental; from raytracing, to interpolation, and more. 
-
-As such, it is fundamental that, for a graphics-based architecture, we have some sort of mechanism for precise calculations. Using the integer data type, one can trivially implement operations for fixed point numbers. 
-
-Our recommended implementation is rather straightforward. If one wants to maintain $n$ bits worth of precision in a fixed point operation, then:
-- Reserve the lower $n$ bits of a word to store the fractional element of the number, which is the number succeeding the decimal point. 
-- Reserve at minimum $32 - n - 1$ bits for the integer element of the number, which is the number preceding the decimal point. We recommend a minimum of $32 - n - 1$ only if you care about signed fixed point numbers. If you do not care for this, then simply reserve $32 - n$ bits instead.
-- From there, whenever you do an operation on a fixed point number involving an immediate, you need to add `1 << n` to the immediate before performing the operation. 
-
-An example implementation of fixed-point can be seen below, for $n = 23$. This implementation reserves 23 bits worth of precision for the fractional part, 8 bits for the integer part, and 1 bit for the sign.
-
-![Fixed Point Spec](diag/fx.png)
-
 ### Registers
 Our architecture is designed to support 36 total registers. The breakdown is as follows:
 
@@ -79,16 +64,17 @@ Each of these registers uses our word-size, that being 32 bits, as underlying da
 
 #### Encoding
 
-| Name  | Storage Size (bits) | Internal Index (Encoding) | Description                    |
-| ----- | ------------------- | ------------------------- | ------------------------------ |
-| `R##` | 32                  | 0-15                      | General-Purpose Registers 0-15 |
-| `I##` | 32                  | 16-31                     | IO-specific Registers 0-15     |
-| `SP`  | 32                  | 32                        | Stack Pointer                  |
-| `PC`  | 32                  | 33                        | Program Counter                |
-| `LR`  | 32                  | 34                        | Link Register                  |
+| Name       | Storage Size (bits) | Internal Index (Encoding) | Description                    |
+| ---------- | ------------------- | ------------------------- | ------------------------------ |
+| `R##`      | 32                  | 0-15                      | General-Purpose Registers 0-15 |
+| `I##`      | 32                  | 16-31                     | IO-specific Registers 0-15     |
+| `SP`       | 32                  | 32                        | Stack Pointer                  |
+| `PC`       | 32                  | 33                        | Program Counter                |
+| `LR`       | 32                  | 34                        | Link Register                  |
+| `reserved` | 32                  | 35-63                     | `reserved`                     |
 
 ### Fetching Model
-As described earlier, our word size is 32 bits. To fully take advantage of this, we will use the `multiple words per instruction` fetch model. This will give us optimal code size while performing relatively efficiently. The only way to fetch data to/from memory is Load and Store.
+As described earlier, our word size is 32 bits. We will use the `single word per instruction` fetch model. This will give us optimal code size while performing relatively efficiently. The only way to fetch data to/from memory is Load and Store.
 The corresponding instructions for the two operations are: `MREAD`, `MWRITE`.
 
 ### Memory Architecture
@@ -98,6 +84,7 @@ We want to keep our instruction and data memory together; as such, we will use t
 
 Our architecture supports 2 types of address modes:
 -   `Register Indirect`: Register value will be read and used as address for the next execution of the processor. An implementation of this can be seen in the implementation of `BRUH.CC`.
+-   `Register Direct`: Register value is used for the next execution of the processor. An implementation of this can be seen in the implemenation of `ADD`.
 -   `PC + Immediate Offset (or, PC Relative)`: Address for the next execution
 of the processor will be calculated using Program Counter (current address) plus
 specified offset immediate. This is the recommended method for subroutine branching. An implementation of this can be seen in the implementation of `B.CC`.
@@ -126,39 +113,39 @@ A list of the operation codes can be found here. The table is subject to change 
 
 | Opcode   | Variant/Condition | Operation | Encoding |
 | -------- | ----------------- | --------- | -------- |
-| `000000` | `0000`            | MREAD     | 3R |
-| `000000` | `0001`            | MWRITE    | 3R |
-| `000000` | -                 | -         | |
-| `000000` | -                 | -         | |
-| `000010` | *User-Supplied*   | BRUH.CC   | 1R |
-| `000011` | *User-Supplied*   | B.CC      | 1I |
-| `000100` | `0000`            | ADD       | 3R |
-| `000100` | `0001`            | ADDI      | 2R1I |
-| `000101` | `0000`            | SUB       | 3R |
-| `000101` | `0001`            | SUBI      | 2R1I |
-| `000101` | `0010`            | CMP       | 2R |
-| `000101` | `0011`            | CMPI      | 1R1I |
-| `000110` | `0000`            | MUL       | 3R |
-| `000110` | `0001`            | MULI      | 2R1I |
-| `000110` | `0100`            | MADD      | 3R |
-| `000111` | `0000`            | DIV       | 3R |
-| `000111` | `0001`            | DIVI      | 2R1I |
-| `001000` | `0000`            | AND       | 2R |
-| `001000` | `0001`            | ANDI      | 1R1I |
-| `001000` | `0010`            | TEST      | 2R |
-| `001001` | `0000`            | NAND      | 2R |
-| `001001` | `0001`            | NANDI     | 1R1I |
-| `001010` | `0000`            | OR        | 2R |
-| `001010` | `0001`            | ORI       | 1R1I |
-| `001011` | `0000`            | XOR       | 2R |
-| `001011` | `0001`            | XORI      | 1R1I |
-| `001100` | `0000`            | LSL       | 3R |
-| `001100` | `0001`            | LSLI      | 2R1I |
-| `001100` | `0010`            | LSR       | 3R |
-| `001100` | `0011`            | LSRI      | 2R1I |
-| `001100` | `0100`            | RSR       | 3R |
-| `001100` | `0101`            | RSRI      | 2R1I |
-| `001111` | `0000`            | NOT       | |
+| `000000` | `0000`            | MREAD     | 3R       |
+| `000000` | `0001`            | MWRITE    | 3R       |
+| `000000` | -                 | -         |          |
+| `000000` | -                 | -         |          |
+| `000010` | *User-Supplied*   | BRUH.CC   | 1R       |
+| `000011` | *User-Supplied*   | B.CC      | 1I       |
+| `000100` | `0000`            | ADD       | 3R       |
+| `000100` | `0001`            | ADDI      | 2R1I     |
+| `000101` | `0000`            | SUB       | 3R       |
+| `000101` | `0001`            | SUBI      | 2R1I     |
+| `000101` | `0010`            | CMP       | 2R       |
+| `000101` | `0011`            | CMPI      | 1R1I     |
+| `000110` | `0000`            | MUL       | 3R       |
+| `000110` | `0001`            | MULI      | 2R1I     |
+| `000110` | `0100`            | MADD      | 3R       |
+| `000111` | `0000`            | DIV       | 3R       |
+| `000111` | `0001`            | DIVI      | 2R1I     |
+| `001000` | `0000`            | AND       | 2R       |
+| `001000` | `0001`            | ANDI      | 1R1I     |
+| `001000` | `0010`            | TEST      | 2R       |
+| `001001` | `0000`            | NAND      | 2R       |
+| `001001` | `0001`            | NANDI     | 1R1I     |
+| `001010` | `0000`            | OR        | 2R       |
+| `001010` | `0001`            | ORI       | 1R1I     |
+| `001011` | `0000`            | XOR       | 2R       |
+| `001011` | `0001`            | XORI      | 1R1I     |
+| `001100` | `0000`            | LSL       | 3R       |
+| `001100` | `0001`            | LSLI      | 2R1I     |
+| `001100` | `0010`            | LSR       | 3R       |
+| `001100` | `0011`            | LSRI      | 2R1I     |
+| `001100` | `0100`            | RSR       | 3R       |
+| `001100` | `0101`            | RSRI      | 2R1I     |
+| `001111` | `0000`            | NOT       |          |
 
 
 #### Variants & Conditions
@@ -361,7 +348,7 @@ RX = RM - imm;
 ##### Description
 
 Calculate the two's complement 32-bit product of registers M and N.
-Store the result in register X.
+Store the result in register X. Overflow is discarded.
 
 ##### C Psuedocode
 
@@ -378,7 +365,7 @@ RX = RM * RN;
 ##### Description
 
 Calculate the two's complement 32-bit product of register M and immediate.
-Store the result in register X.
+Store the result in register X. Overflow is discarded.
 
 ##### C Psuedocode
 
@@ -395,7 +382,7 @@ RX = RM * imm;
 ##### Description
 
 Calculate the two's complement 32-bit quotient of registers M and N.
-Store the result in register X.
+Store the result in register X. Remainder is discarded.
 
 
 
@@ -414,7 +401,7 @@ RX = RM / RN;
 ##### Description
 
 Calculate the two's complement 32-bit quotient of register M and immediate.
-Store the result in register X.
+Store the result in register X. Remainder is discarded.
 
 
 
@@ -752,9 +739,9 @@ We benchmarked the exchange sort with a 100 item array. The array was randomly g
 
 ### Matrix multiply
 We benchmarked the matrix multiply by multiplying 2 4x4 matrices. Similar to our previous benchmark, the cache is what caused the largest performance reason, though, the pipeline being disabled also made a difference in performance.
-|        | Pipeline & Cache | Cache   | Pipeline  | None      |
-| ------ | ---------------- | ------- | --------- | --------- |
-| cycles | 5,858            | 9,450   | 53,417    | 63,071    |
+|        | Pipeline & Cache | Cache | Pipeline | None   |
+| ------ | ---------------- | ----- | -------- | ------ |
+| cycles | 5,858            | 9,450 | 53,417   | 63,071 |
 
 ### Results
 Evidently, the cache is the largest contributor to performance. This make sense as reading from memory is very slow and takes several clock cycles (0x30 in our benchmarks). This simulator shows the need for a cache, one that is ideally large. Additionally, having a pipeline is also important. Although the pipeline doesn't make as much of a difference as the cache, as the program increases in size, the effects of not having a cache become more evident.
