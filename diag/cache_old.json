@@ -1,0 +1,17 @@
+(
+  {reg: [
+    {
+      "bits": 16,
+      "name": "offset"
+    },
+    {
+      "bits": 8,
+      "name": "Index"
+    },
+    {
+      "bits": 8,
+      "name": "Tag"
+    },
+  ]
+}
+)

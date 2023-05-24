@@ -2,7 +2,6 @@
   {reg: [
     {"bits": 16, "name": "offset"},
     {"bits": 8, "name": "Index"},
-    {"bits": 7, "name": "Tag"},
-    {"bits": 1, "name": "Dirty"},
+    {"bits": 8, "name": "Tag"},
   ]}
 )
