@@ -804,6 +804,49 @@ but does not imply the minimum runnable version.
 -   garand-docs
     -   pandoc 2.19.2
 
+#### Configuring Prerequisites
+##### Garand
+First, install `cmake`, `vcpkg`, and a C compiler. 
+
+Afterwards, run the commands below depending on your host system.
+
+#### Windows
+
+```
+vcpkg install fmt sdl2 sdl2-image sdl2-mixer imgui[sdl2-binding,sdl2-renderer-binding] sdl2pp
+```
+
+#### Linux
+
+```
+vcpkg install fmt "sdl2[wayland,x11]" sdl2-image sdl2-mixer "imgui[sdl2-binding,sdl2-renderer-binding]" sdl2pp --recurse
+```
+
+__Save the path that it gives you for `vcpkg`. It is important.__
+
+Once you are done, make sure you are in the project root directory, and run the following command to build:
+```
+cmake . -DCMAKE_TOOLCHAIN_FILE=`<vcpkg_path>`
+```
+
+If you are using the CMake extension in Visual Studio Code, you can set the CMake settings as follows:
+```JSON
+"cmake.configureSettings": {
+    "CMAKE_TOOLCHAIN_FILE" : "<vcpkg_path>/scripts/buildsystems/vcpkg.cmake"
+},
+```
+
+##### Garand Assembler
+First, install Python 3.11+. As this is specific to a user's distribution, I will omit the steps for this part.
+
+Then, install the Python Imaging Library (PIL) via `pip` with the following command:
+> pip install Pillow
+
+##### Garand Documentation
+If you want to generate a formal version of this PDF, you just want to install pandoc.
+
+
+After following the above, you are now ready to work with Garand!
 ### Building
 
 #### garand
@@ -841,7 +884,7 @@ python garand-as.py <input.gar> <output.bin>
 
 #### garand-docs
 
-Use your favorite PDF viewer to view the `proposal.pdf`
+Use your favorite PDF viewer to view the  generated`proposal.pdf`.
 
 ### Using
 
