@@ -38,12 +38,14 @@ struct CacheEntry {
 ```
 
 A detailed variant of the cache entry layout is as follows:
-![Cache Table](diag/cache.png)
+
+![Cache Table](diag/cache.png)\ 
 
 ### Data Types
 The Garand architecture officially has support for just one data type, that being integers (both signed and unsigned formats).
 
 Our architecture defines two types of integers:
+
 -   A 32 bit unsigned integer, with the range [0, $2^{32}-1$].
 -   A 32 bit signed integer. In order to represent the negative range of numbers, our architecture will use the two's complement binary representation to store both signed and unsigned numbers. However our range is less than that of the unsigned case; a mere [$-2^{31}$, $2^{31}-1$], or [$-2147483648$, $2147483647$]. 
 
@@ -71,7 +73,7 @@ Each of these registers uses our word-size, that being 32 bits, as underlying da
 | `SP`       | 32                  | 32                        | Stack Pointer                  |
 | `PC`       | 32                  | 33                        | Program Counter                |
 | `LR`       | 32                  | 34                        | Link Register                  |
-| `reserved` | 32                  | 35-63                     | `reserved`                     |
+| -          | 32                  | 35-63                     | Reserved for future use        |
 
 ### Fetching Model
 As described earlier, our word size is 32 bits. We will use the `single word per instruction` fetch model. This will give us optimal code size while performing relatively efficiently. The only way to fetch data to/from memory is Load and Store.
@@ -83,30 +85,49 @@ We want to keep our instruction and data memory together; as such, we will use t
 ### Addressing Modes
 
 Our architecture supports 2 types of address modes:
+
 -   `Register Indirect`: Register value will be read and used as address for the next execution of the processor. An implementation of this can be seen in the implementation of `BRUH.CC`.
 -   `Register Direct`: Register value is used for the next execution of the processor. An implementation of this can be seen in the implemenation of `ADD`.
 -   `PC + Immediate Offset (or, PC Relative)`: Address for the next execution
 of the processor will be calculated using Program Counter (current address) plus
 specified offset immediate. This is the recommended method for subroutine branching. An implementation of this can be seen in the implementation of `B.CC`.
 
+\newpage
+
 ### Instructions
 
 #### Encoding
 All instructions are encoded with a uniform word-size, and follow one of the following base encoding.
-#### General Encoding
-![Instruction Encoding](diag/ins_encoding.png)
-#### 3 Register Encoding (3R)
-![3 Register Instruction Encoding](diag/ins_enc_reg3.png)
-#### 2 Register Encoding (3R)
-![2 Register Instruction Encoding](diag/ins_enc_reg2.png)
-#### 2 Register 1 Immediate Encoding (2R1I)
-![2 Register 1 Immediate Encoding](diag/ins_enc_reg2_imm1.png)
-#### 1 Register 1 Immediate Encoding (1R1I)
-![2 Register 1 Immediate Encoding](diag/ins_enc_reg1_imm1.png)
-#### 1 Register Encoding (1R)
-![1 Register Encoding](diag/ins_enc_reg1.png)
-#### 1 Immediate Encoding (1I)
-![1 Immediate Encoding](diag/ins_enc_imm1.png)
+
+**General Encoding**
+
+![General Encoding](diag/ins_encoding.png)\ 
+
+**3 Register Encoding (3R)**
+
+![3 Register Instruction Encoding](diag/ins_enc_reg3.png)\ 
+
+**2 Register Encoding (2R)**
+
+![2 Register Instruction Encoding](diag/ins_enc_reg2.png)\ 
+
+**2 Register 1 Immediate Encoding (2R1I)**
+
+![2 Register 1 Immediate Encoding](diag/ins_enc_reg2_imm1.png)\ 
+
+**1 Register 1 Immediate Encoding (1R1I)**
+
+![2 Register 1 Immediate Encoding](diag/ins_enc_reg1_imm1.png)\ 
+
+**1 Register Encoding (1R)**
+
+![1 Register Encoding](diag/ins_enc_reg1.png)\ 
+
+**1 Immediate Encoding (1I)**
+
+![1 Immediate Encoding](diag/ins_enc_imm1.png)\ 
+
+\newpage
 
 #### Operation Codes
 A list of the operation codes can be found here. The table is subject to change as instructions are added or removed.
@@ -165,7 +186,7 @@ Our architecture supports condition-based execution, based on that of ARM. All f
 
 The layout for each of these flags in our condition fields is as follows:
 
-![Condition Encoding](diag/cond_enc.png)
+![Condition Encoding](diag/cond_enc.png)\ 
 
 As the next section details, we combine these flags to implement condition codes.
 
@@ -193,6 +214,8 @@ The instructions that use the condition codes are `BRUH.CC`, and `B.CC`. They wi
 | `1101`   | `PL`     | Positive or zero               | `N == 0`              |
 | `1110`   | `NG`     | Negative                       | `N == 1`              |
 | `1111`   |          | *Reserved*                     |                       |
+
+\newpage
 
 ## Instruction Documentation
 ### Load/Store
@@ -269,7 +292,7 @@ The condition `CC` represents one of the condition codes defined in _Condition E
 PC = RM;
 ```
 
-### Arithmetic (Fixed Point, Integer)
+### Arithmetic (integer)
 
 #### ADD
 
@@ -704,6 +727,8 @@ RX = RSR(RM, imm);
 
 Break execution. In the simulator, the processor must pause processing after this point.
 
+\newpage
+
 ## Management Plan
 
 - The simulator for Garand is written in C++, using the C++20 standard.
@@ -728,17 +753,21 @@ Break execution. In the simulator, the processor must pause processing after thi
   - Writing Benchmark: Sergio Ly
   - Benchmarking: Sergio Ly
 
+\newpage
+
 ## Benchmarks
 We used the two required benchmarks (exchange sort & matrix multiply) to see how our simulator performed based on cache size. We set our cache hit to take 0x5 cycles and miss to take 0x30 cycles.
 
 ### Exchange Sort
 We benchmarked the exchange sort with a 100 item array. The array was randomly generated. Below is a table of our results. Most notably, having a cache is the most important part of our ISA. Our results show that not having is cache causes a significant slowdown in performance, since there are several more pipeline stalls due to fetching from main memory.
+
 |        | Pipeline & Cache | Cache   | Pipeline  | None      |
 | ------ | ---------------- | ------- | --------- | --------- |
 | cycles | 308,412          | 515,674 | 2,768,141 | 3,598,903 |
 
 ### Matrix multiply
 We benchmarked the matrix multiply by multiplying 2 4x4 matrices. Similar to our previous benchmark, the cache is what caused the largest performance reason, though, the pipeline being disabled also made a difference in performance.
+
 |        | Pipeline & Cache | Cache | Pipeline | None   |
 | ------ | ---------------- | ----- | -------- | ------ |
 | cycles | 5,858            | 9,450 | 53,417   | 63,071 |
@@ -759,6 +788,8 @@ A third major challenge was working with C++ and compiling the project. We used 
 Additionally to project specific issues, because we call CPU cycle every time
 GUI renders, it can slow down the execution of the program significantly. When running our larger benchmarks, we had to find a way to make them fast. Thus, we implemented a frame skipping feature, which would only update the GUI every $n$ clock cycles.
 
+\newpage
+
 ## Manual
 
 The instructions below contain details of building and running the software.
@@ -768,6 +799,7 @@ https://github.com/Tensor497/garand-docs.
 ### Overview
 
 The `garand` project is divided into three repositories:
+
 -   garand: ([github.com/Tensor497/garand](https://github.com/Tensor497/garand)).
     This is the repository for the simulator and disassembler written in C++20.
 -   garand-as: ([github.com/Tensor497/garand-as](https://github.com/Tensor497/garand-as)).
@@ -782,8 +814,9 @@ You may also download ZIP file containing the source code.
 ### Prerequisites
 
 The following list contains all dependencies you will need to install before
-compiling and running this project. The version are extracted from dev machine,
+compiling and running this project. The version are extracted from developer machine,
 but does not imply the minimum runnable version.
+
 -   garand:
     -   C++ compiler supporting C++20 standard.
         MSVC 16.11, Clang 16, GCC 12 are known to work.
@@ -810,16 +843,17 @@ First, install `cmake`, `vcpkg`, and a C compiler.
 
 Afterwards, run the commands below depending on your host system.
 
-#### Windows
+###### Windows
 
 ```
 vcpkg install fmt sdl2 sdl2-image sdl2-mixer imgui[sdl2-binding,sdl2-renderer-binding] sdl2pp
 ```
 
-#### Linux
+###### Linux
 
 ```
-vcpkg install fmt "sdl2[wayland,x11]" sdl2-image sdl2-mixer "imgui[sdl2-binding,sdl2-renderer-binding]" sdl2pp --recurse
+vcpkg install fmt "sdl2[wayland,x11]" sdl2-image sdl2-mixer \
+"imgui[sdl2-binding,sdl2-renderer-binding]" sdl2pp --recurse
 ```
 
 __Save the path that it gives you for `vcpkg`. It is important.__
@@ -840,13 +874,16 @@ If you are using the CMake extension in Visual Studio Code, you can set the CMak
 First, install Python 3.11+. As this is specific to a user's distribution, I will omit the steps for this part.
 
 Then, install the Python Imaging Library (PIL) via `pip` with the following command:
+
 > pip install Pillow
 
 ##### Garand Documentation
-If you want to generate a formal version of this PDF, you just want to install pandoc.
+If you want to generate a formal version of this PDF, you just want to install
+pandoc from your favorite package manager or https://pandoc.org/
 
 
 After following the above, you are now ready to work with Garand!
+
 ### Building
 
 #### garand
@@ -937,6 +974,7 @@ Open up _garand_. You should see a window named Control UI with a list of checkb
 Click on _Simulator_ to show simulator window. 6 new windows will show up.
 
 First is _Simulator_ window. Here you can find:
+
 -   `Load Offset`: Input offset in memory to load data in. Expect hex value.
 -   `Executable`: Input box for path to the executable, which is the output of
     assembler. There should be no quotes wrapping the path.
@@ -958,6 +996,7 @@ First is _Simulator_ window. Here you can find:
 -   `Reset Processor`: Reset CPU to initial state.
 
 Second window is `Feature`, here you can find
+
 -   `Turn on Skipping`: Enabling CPU skipping feature. Clicking on the checkbox
     will display an integer input box where you can specify number of skipping
     cycles when running. For example, 1000 means CPU will cycle 1000+1 cycles
@@ -972,6 +1011,7 @@ Second window is `Feature`, here you can find
 Third window is `Pipeline View`, displaying the state of each stage of the
 pipeline: `Fetch`, `Decode`, `Execute`, `Write-back`.
 At each stage, if not `(empty)`, there are 5 lines of information:
+
 -   `I`: Disassembly of instruction.
     This is provided for reference of what instruction would be executed.
 -   `C`: Cycle. Number of cycles that CPU has spent on this instruction at
@@ -1009,3 +1049,19 @@ you will also see `Cache View` being updated with value from memory.
 If the program also write to  emory, you should be able to see `Memory View`
 updating in realtime. If your code use graphics, it would be rendered behind the
 windows.
+
+#### Extras
+
+There are 4 other demos included in the simulator for testing purpose:
+
+-   Memory Demo: Testing cache feature in memory. Address and value can be
+    manually addressed for reading and writing
+    in order to examine the latency and average latency.
+-   Instruction Demo: Testing the execution of instruction. You can add
+    new instruction through specifying each of its part and immediately execute it.
+    A disassemble view is shown to assist inputting.
+-   Pipeline Demo: Evaluating pipeline implementation of the processor.
+    Features of pipeline such as forwarding, flushing, etc. are tested here.
+    This is originally the base of the simulator UI.
+-   Disassembler Demo: Testing the decoder. When in doubt, use this to open
+    a garand binary; the disassembly view should closely match the source assembly.
